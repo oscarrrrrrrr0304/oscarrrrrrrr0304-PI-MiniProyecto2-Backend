@@ -1,18 +1,6 @@
-# Backend API - Mini Proyecto 2
 
-Backend básico desarrollado con Node.js, Express.js y TypeScript, listo para desplegar en Render.
 
-## 🚀 Características
-
-- API RESTful con Express.js y TypeScript
-- Autenticación JWT
-- Gestión de usuarios con roles (user/admin)
-- Base de datos MongoDB con Mongoose
-- Middleware de autenticación y autorización
-- Configuración para desarrollo y producción
-- Listo para desplegar en Render
-
-## 📋 Endpoints Disponibles
+## Endpoints Disponibles
 
 ### Autenticación
 
