@@ -13,4 +13,4 @@ router.post('/login', login);
 // Ruta para obtener el perfil del usuario (requiere autenticación)
 router.get('/profile', auth, getProfile);
 
-export default router;
+export default router; 
