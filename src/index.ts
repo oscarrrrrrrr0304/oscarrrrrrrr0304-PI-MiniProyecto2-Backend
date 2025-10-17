@@ -10,12 +10,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuración de CORS
+// Configuración de CORS - Usa FRONTEND_URL de las variables de entorno
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
-  'https://pi-mini-proyecto2-frontend.vercel.app'
-];
+  process.env.FRONTEND_URL || 'https://pi-mini-proyecto2-frontend.vercel.app'
+].filter(Boolean); // Filtrar valores undefined
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -23,7 +23,9 @@ app.use(cors({
     if (!origin) return callback(null, true);
     
     if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'El origen del CORS no está permitido para acceder a este recurso.';
+      const msg = `El origen ${origin} del CORS no está permitido para acceder a este recurso.`;
+      console.error(msg);
+      console.log('Orígenes permitidos:', allowedOrigins);
       return callback(new Error(msg), false);
     }
     return callback(null, true);
@@ -70,6 +72,8 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`Servidor corriendo en puerto ${PORT}`);
       console.log(`Entorno: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`CORS configurado para:`, allowedOrigins);
+      console.log(`Email configurado: ${process.env.EMAIL_USER ? 'SÍ' : 'NO'}`);
     });
   } catch (error) {
     console.error('Error al iniciar el servidor:', error);
