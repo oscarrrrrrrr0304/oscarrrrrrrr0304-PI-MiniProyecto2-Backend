@@ -32,17 +32,3 @@ export const auth = async (req: AuthRequest, res: Response, next: NextFunction):
   }
 };
 
-export const adminAuth = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    await auth(req, res, () => {});
-    
-    if (req.user?.role !== 'admin') {
-      res.status(403).json({ error: 'Acceso denegado. Se requieren privilegios de administrador.' });
-      return;
-    }
-    
-    next();
-  } catch (error) {
-    res.status(403).json({ error: 'Acceso denegado.' });
-  }
-};
