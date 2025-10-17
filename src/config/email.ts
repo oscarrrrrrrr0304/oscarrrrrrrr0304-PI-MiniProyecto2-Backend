@@ -4,43 +4,52 @@ import nodemailer from 'nodemailer';
 // Cargar variables de entorno
 dotenv.config();
 
-// Validar que las credenciales de email estén configuradas
-const validateEmailConfig = () => {
+// Función para validar que las credenciales de email estén configuradas
+const validateEmailConfig = (): { valid: boolean; missing: string[] } => {
   const requiredVars = ['EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_USER', 'EMAIL_PASSWORD'];
   const missing = requiredVars.filter(varName => !process.env[varName]);
   
   if (missing.length > 0) {
-    console.warn(`Variables de email faltantes: ${missing.join(', ')}`);
-    console.warn('El servicio de recuperación de contraseña no funcionará correctamente');
-    return false;
+    console.warn(`  Variables de email faltantes: ${missing.join(', ')}`);
+    console.warn('  El servicio de recuperación de contraseña no funcionará correctamente');
+    return { valid: false, missing };
   }
-  return true;
+  
+  console.log(' Todas las variables de email están configuradas');
+  return { valid: true, missing: [] };
 };
 
-const isEmailConfigured = validateEmailConfig();
+// Validar al inicio (solo para logs)
+const initialCheck = validateEmailConfig();
+
+// Función para crear el transportador (se crea cuando se necesita)
+const createTransporter = () => {
+  return nodemailer.createTransport({
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.EMAIL_PORT || '587'),
+    secure: false, // true para puerto 465, false para otros puertos
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD
+    }
+  });
+};
 
 // Configurar el transportador de email
-export const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.EMAIL_PORT || '587'),
-  secure: false, // true para puerto 465, false para otros puertos
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  }
-});
+export const transporter = createTransporter();
 
 // Verificar la conexión solo si está configurado
-if (isEmailConfigured) {
+if (initialCheck.valid) {
   transporter.verify(function (error: any, success: any) {
     if (error) {
-      console.error('Error al conectar con el servidor de email:', error.message);
+      console.error(' Error al conectar con el servidor de email:', error.message);
     } else {
-      console.log('Servidor de email listo para enviar mensajes');
+      console.log(' Servidor de email listo para enviar mensajes');
+      console.log(` Email configurado: ${process.env.EMAIL_USER}`);
     }
   });
 } else {
-  console.warn('Transporter de email no configurado - saltando verificación');
+  console.warn('  Transporter de email no configurado - saltando verificación');
 }
 
 // Función para enviar email de recuperación de contraseña
@@ -48,13 +57,21 @@ export const sendPasswordResetEmail = async (
   email: string,
   resetToken: string
 ) => {
-  // Verificar configuración antes de enviar
-  if (!isEmailConfigured) {
-    throw new Error('Las credenciales de email no están configuradas');
+  // Validar configuración antes de enviar (validación en tiempo real)
+  const config = validateEmailConfig();
+  
+  if (!config.valid) {
+    console.error(' No se puede enviar email. Variables faltantes:', config.missing);
+    throw new Error(`Configuración de email incompleta. Faltan: ${config.missing.join(', ')}`);
   }
 
   const frontendURL = process.env.FRONTEND_URL || 'http://localhost:5173';
   const resetURL = `${frontendURL}/reset-password/${resetToken}`;
+
+  console.log(`Preparando email de recuperación...`);
+  console.log(`   Para: ${email}`);
+  console.log(`   Desde: ${process.env.EMAIL_USER}`);
+  console.log(`   URL de reseteo: ${resetURL}`);
 
   const mailOptions = {
     from: `"${process.env.EMAIL_FROM_NAME || 'Tu App'}" <${process.env.EMAIL_USER}>`,
@@ -132,12 +149,16 @@ export const sendPasswordResetEmail = async (
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Email enviado exitosamente:', info.messageId);
-    console.log('Email enviado:', info.messageId);
+    // Crear un nuevo transportador para asegurarnos de tener la configuración más reciente
+    const currentTransporter = createTransporter();
+    const info = await currentTransporter.sendMail(mailOptions);
+    console.log(' Email enviado exitosamente!');
+    console.log(`   MessageID: ${info.messageId}`);
     return true;
-  } catch (error) {
-    console.error('Error al enviar email:', error);
+  } catch (error: any) {
+    console.error(' Error al enviar email:');
+    console.error(`   Mensaje: ${error.message}`);
+    console.error(`   Código: ${error.code || 'N/A'}`);
     throw error;
   }
 };
