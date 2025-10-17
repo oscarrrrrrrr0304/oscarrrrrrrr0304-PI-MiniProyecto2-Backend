@@ -39,17 +39,16 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 export const updateUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const { name, email, age, role } = req.body;
+    const { name, email, age } = req.body;
 
-    // Verificar si el usuario actual es admin o está actualizando su propio perfil
-    if (req.user?.role !== 'admin' && (req.user?._id as any).toString() !== id) {
+    if ((req.user?._id as any).toString() !== id) {
       res.status(403).json({ error: 'No tienes permisos para actualizar este usuario' });
       return;
     }
 
     const user = await User.findByIdAndUpdate(
       id,
-      { name, email, age, role },
+      { name, email, age },
       { new: true, runValidators: true }
     ).select('-password');
 
@@ -72,9 +71,8 @@ export const deleteUser = async (req: AuthRequest, res: Response): Promise<void>
   try {
     const { id } = req.params;
 
-    // Verificar si el usuario actual es admin
-    if (req.user?.role !== 'admin') {
-      res.status(403).json({ error: 'No tienes permisos para eliminar usuarios' });
+    if ((req.user?._id as any).toString() !== id) {
+      res.status(403).json({ error: 'No tienes permisos para eliminar este usuario' });
       return;
     }
 
