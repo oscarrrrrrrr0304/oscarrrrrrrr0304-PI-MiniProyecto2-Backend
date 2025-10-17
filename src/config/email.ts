@@ -16,7 +16,7 @@ export const transporter = nodemailer.createTransport({
 });
 
 // Verificar la conexión
-transporter.verify(function (error, success) {
+transporter.verify(function (error: any, success: any) {
   if (error) {
     console.log('Error al conectar con el servidor de email:', error);
   } else {
