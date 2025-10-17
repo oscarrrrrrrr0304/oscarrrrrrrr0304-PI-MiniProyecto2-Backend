@@ -39,7 +39,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 export const updateUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const { name, email, role } = req.body;
+    const { name, email, age, role } = req.body;
 
     // Verificar si el usuario actual es admin o está actualizando su propio perfil
     if (req.user?.role !== 'admin' && (req.user?._id as any).toString() !== id) {
@@ -49,7 +49,7 @@ export const updateUser = async (req: AuthRequest, res: Response): Promise<void>
 
     const user = await User.findByIdAndUpdate(
       id,
-      { name, email, role },
+      { name, email, age, role },
       { new: true, runValidators: true }
     ).select('-password');
 

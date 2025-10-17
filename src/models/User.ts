@@ -5,6 +5,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  age: number;
   role: 'user' | 'admin';
   createdAt: Date;
   updatedAt: Date;
@@ -30,6 +31,12 @@ const userSchema = new Schema<IUser>({
     type: String,
     required: [true, 'La contraseña es requerida'],
     minlength: [6, 'La contraseña debe tener al menos 6 caracteres']
+  },
+  age: {
+    type: Number,
+    required: [true, 'La edad es requerida'],
+    min: [0, 'La edad no puede ser negativa'],
+    max: [120, 'La edad no puede ser mayor a 120 años']
   },
   role: {
     type: String,

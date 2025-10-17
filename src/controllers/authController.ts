@@ -5,7 +5,7 @@ import { AuthRequest } from '../middleware/auth';
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, age, role } = req.body;
 
     // Verificar si el usuario ya existe
     const existingUser = await User.findOne({ email });
@@ -19,6 +19,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       name,
       email,
       password,
+      age,
       role: role || 'user'
     });
 
@@ -35,6 +36,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         id: user._id,
         name: user.name,
         email: user.email,
+        age: user.age,
         role: user.role,
         createdAt: user.createdAt
       }
@@ -74,6 +76,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         id: user._id,
         name: user.name,
         email: user.email,
+        age: user.age,
         role: user.role,
         createdAt: user.createdAt
       }
@@ -97,6 +100,7 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
         id: user._id,
         name: user.name,
         email: user.email,
+        age: user.age,
         role: user.role,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
