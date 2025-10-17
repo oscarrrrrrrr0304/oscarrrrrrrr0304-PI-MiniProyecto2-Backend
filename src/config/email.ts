@@ -53,7 +53,7 @@ export const sendPasswordResetEmail = async (
             padding: 20px;
           }
           .header {
-            background-color: #4CAF50;
+            background-color: #21242c;
             color: white;
             padding: 20px;
             text-align: center;
@@ -67,7 +67,7 @@ export const sendPasswordResetEmail = async (
           .button {
             display: inline-block;
             padding: 12px 30px;
-            background-color: #4CAF50;
+            background-color: #363b47ff;
             color: white;
             text-decoration: none;
             border-radius: 5px;
@@ -94,7 +94,7 @@ export const sendPasswordResetEmail = async (
               <a href="${resetURL}" class="button">Restablecer Contraseña</a>
             </div>
             <p>O copia y pega este enlace en tu navegador:</p>
-            <p style="word-break: break-all; color: #4CAF50;">${resetURL}</p>
+            <p style="word-break: break-all; color: #21242c;">${resetURL}</p>
             <p><strong>Este enlace expirará en 1 hora.</strong></p>
             <p>Si no solicitaste restablecer tu contraseña, puedes ignorar este correo de forma segura.</p>
           </div>
