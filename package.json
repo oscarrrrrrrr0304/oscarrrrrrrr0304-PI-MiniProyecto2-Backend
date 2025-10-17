@@ -21,20 +21,22 @@
   },
   "homepage": "https://github.com/oscarrrrrrrr0304/oscarrrrrrrr0304-PI-MiniProyecto2-Backend#readme",
   "dependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.6.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.1",
-    "typescript": "^5.9.2",
-    "@types/node": "^24.6.0",
-    "@types/express": "^5.0.3",
-    "@types/bcrypt": "^6.0.0",
-    "@types/cors": "^2.8.19",
-    "@types/jsonwebtoken": "^9.0.10"
+    "nodemailer": "^7.0.9",
+    "typescript": "^5.9.2"
   },
   "devDependencies": {
+    "@types/nodemailer": "^7.0.2",
     "ts-node-dev": "^2.0.0"
   }
 }

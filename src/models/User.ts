@@ -6,6 +6,8 @@ export interface IUser extends Document {
   email: string;
   password: string;
   age: number;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(password: string): Promise<boolean>;
@@ -36,6 +38,14 @@ const userSchema = new Schema<IUser>({
     required: [true, 'La edad es requerida'],
     min: [0, 'La edad no puede ser negativa'],
     max: [120, 'La edad no puede ser mayor a 120 años']
+  },
+  resetPasswordToken: {
+    type: String,
+    default: undefined
+  },
+  resetPasswordExpires: {
+    type: Date,
+    default: undefined
   }
 }, {
   timestamps: true
