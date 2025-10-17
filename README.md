@@ -12,21 +12,15 @@
    npm install
    ```
 
-3. **Configurar variables de entorno:**
-
-   ```bash
-   cp .env.example .env
-   ```
-
    Edita el archivo `.env` con tus configuraciones.
 
-4. **Ejecutar en modo desarrollo:**
+3. **Ejecutar en modo desarrollo:**
 
    ```bash
    npm run dev
    ```
 
-5. **Compilar para producción:**
+4. **Compilar para producción:**
    ```bash
    npm run build
    npm start
