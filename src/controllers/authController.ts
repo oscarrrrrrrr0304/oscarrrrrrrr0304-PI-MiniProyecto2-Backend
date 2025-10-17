@@ -5,26 +5,23 @@ import { AuthRequest } from '../middleware/auth';
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, age } = req.body;
 
-    // Verificar si el usuario ya existe
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       res.status(400).json({ error: 'El usuario ya existe con este email' });
       return;
     }
 
-    // Crear nuevo usuario
     const user = new User({
       name,
       email,
       password,
-      role: role || 'user'
+      age
     });
 
     await user.save();
 
-    // Generar token JWT
     const jwtSecret = process.env.JWT_SECRET || 'tu_jwt_secret_aqui';
     const token = jwt.sign({ userId: user._id }, jwtSecret, { expiresIn: '7d' });
 
@@ -35,7 +32,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        age: user.age,
         createdAt: user.createdAt
       }
     });
@@ -74,7 +71,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        age: user.age,
         createdAt: user.createdAt
       }
     });
@@ -97,7 +94,7 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        age: user.age,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
       }

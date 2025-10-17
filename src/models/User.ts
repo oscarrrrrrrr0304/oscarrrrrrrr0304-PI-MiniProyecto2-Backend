@@ -5,7 +5,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
-  role: 'user' | 'admin';
+  age: number;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(password: string): Promise<boolean>;
@@ -31,10 +31,11 @@ const userSchema = new Schema<IUser>({
     required: [true, 'La contraseña es requerida'],
     minlength: [6, 'La contraseña debe tener al menos 6 caracteres']
   },
-  role: {
-    type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
+  age: {
+    type: Number,
+    required: [true, 'La edad es requerida'],
+    min: [0, 'La edad no puede ser negativa'],
+    max: [120, 'La edad no puede ser mayor a 120 años']
   }
 }, {
   timestamps: true
