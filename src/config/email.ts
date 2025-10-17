@@ -4,6 +4,21 @@ import nodemailer from 'nodemailer';
 // Cargar variables de entorno
 dotenv.config();
 
+// Validar que las credenciales de email estén configuradas
+const validateEmailConfig = () => {
+  const requiredVars = ['EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_USER', 'EMAIL_PASSWORD'];
+  const missing = requiredVars.filter(varName => !process.env[varName]);
+  
+  if (missing.length > 0) {
+    console.warn(`Variables de email faltantes: ${missing.join(', ')}`);
+    console.warn('El servicio de recuperación de contraseña no funcionará correctamente');
+    return false;
+  }
+  return true;
+};
+
+const isEmailConfigured = validateEmailConfig();
+
 // Configurar el transportador de email
 export const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'smtp.gmail.com',
@@ -15,21 +30,30 @@ export const transporter = nodemailer.createTransport({
   }
 });
 
-// Verificar la conexión
-transporter.verify(function (error: any, success: any) {
-  if (error) {
-    console.log('Error al conectar con el servidor de email:', error);
-  } else {
-    console.log('Servidor de email listo para enviar mensajes');
-  }
-});
+// Verificar la conexión solo si está configurado
+if (isEmailConfigured) {
+  transporter.verify(function (error: any, success: any) {
+    if (error) {
+      console.error('Error al conectar con el servidor de email:', error.message);
+    } else {
+      console.log('Servidor de email listo para enviar mensajes');
+    }
+  });
+} else {
+  console.warn('Transporter de email no configurado - saltando verificación');
+}
 
 // Función para enviar email de recuperación de contraseña
 export const sendPasswordResetEmail = async (
   email: string,
   resetToken: string
 ) => {
-  const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000';
+  // Verificar configuración antes de enviar
+  if (!isEmailConfigured) {
+    throw new Error('Las credenciales de email no están configuradas');
+  }
+
+  const frontendURL = process.env.FRONTEND_URL || 'http://localhost:5173';
   const resetURL = `${frontendURL}/reset-password/${resetToken}`;
 
   const mailOptions = {
@@ -109,6 +133,7 @@ export const sendPasswordResetEmail = async (
 
   try {
     const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Email enviado exitosamente:', info.messageId);
     console.log('Email enviado:', info.messageId);
     return true;
   } catch (error) {
