@@ -1,18 +1,45 @@
+/**
+ * @fileoverview Modelo de Usuario con validaciones y métodos de autenticación.
+ * @module models/User
+ */
+
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 
+/**
+ * Interface que define la estructura de un documento de usuario.
+ * @interface IUser
+ * @extends {Document}
+ */
 export interface IUser extends Document {
+  /** Nombre completo del usuario */
   name: string;
+  /** Correo electrónico único del usuario */
   email: string;
+  /** Contraseña hasheada del usuario */
   password: string;
+  /** Edad del usuario */
   age: number;
+  /** Token hasheado para reseteo de contraseña (opcional) */
   resetPasswordToken?: string;
+  /** Fecha de expiración del token de reseteo (opcional) */
   resetPasswordExpires?: Date;
+  /** Fecha de creación del documento */
   createdAt: Date;
+  /** Fecha de última actualización del documento */
   updatedAt: Date;
+  /**
+   * Compara una contraseña en texto plano con la contraseña hasheada del usuario.
+   * @param password - Contraseña en texto plano a comparar
+   * @returns Promesa que resuelve a true si las contraseñas coinciden
+   */
   comparePassword(password: string): Promise<boolean>;
 }
 
+/**
+ * Schema de Mongoose para el modelo de Usuario.
+ * Incluye validaciones y configuración de timestamps automáticos.
+ */
 const userSchema = new Schema<IUser>({
   name: {
     type: String,
@@ -51,7 +78,10 @@ const userSchema = new Schema<IUser>({
   timestamps: true
 });
 
-// Middleware para hashear la contraseña antes de guardar
+/**
+ * Middleware de Mongoose que hashea la contraseña antes de guardar el documento.
+ * Solo se ejecuta si la contraseña ha sido modificada.
+ */
 userSchema.pre('save', async function(next: any) {
   if (!this.isModified('password')) return next();
   
@@ -64,10 +94,18 @@ userSchema.pre('save', async function(next: any) {
   }
 });
 
-// Método para comparar contraseñas
+/**
+ * Método de instancia para comparar una contraseña en texto plano con la hasheada.
+ * @param password - Contraseña en texto plano a verificar
+ * @returns Promesa que resuelve a true si las contraseñas coinciden
+ */
 userSchema.methods.comparePassword = async function(password: string): Promise<boolean> {
   return await bcrypt.compare(password, this.password);
 };
 
+/**
+ * Modelo de Mongoose para la colección de usuarios.
+ * @type {mongoose.Model<IUser>}
+ */
 const User = mongoose.model<IUser>('User', userSchema);
 export { User };

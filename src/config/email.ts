@@ -1,10 +1,22 @@
+/**
+ * @fileoverview Configuración del servicio de email para el envío de correos electrónicos.
+ * Soporta SendGrid (recomendado para producción) y Gmail SMTP (para desarrollo local).
+ * @module config/email
+ */
+
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 
 // Cargar variables de entorno
 dotenv.config();
 
-// Función para validar que las credenciales de email estén configuradas
+/**
+ * Valida que las credenciales de email requeridas estén configuradas en las variables de entorno.
+ * 
+ * @returns {Object} Objeto con el estado de validación
+ * @returns {boolean} returns.valid - Indica si todas las variables requeridas están presentes
+ * @returns {string[]} returns.missing - Array con los nombres de las variables faltantes
+ */
 const validateEmailConfig = (): { valid: boolean; missing: string[] } => {
   const requiredVars = ['EMAIL_USER', 'SENDGRID_API_KEY'];
   const missing = requiredVars.filter(varName => !process.env[varName]);
@@ -22,7 +34,13 @@ const validateEmailConfig = (): { valid: boolean; missing: string[] } => {
 // Validar al inicio (solo para logs)
 const initialCheck = validateEmailConfig();
 
-// Función para crear el transportador usando SendGrid
+/**
+ * Crea y configura un transportador de Nodemailer.
+ * Prioriza SendGrid si está disponible (recomendado para Render y producción).
+ * En su defecto, utiliza Gmail SMTP para desarrollo local.
+ * 
+ * @returns {nodemailer.Transporter} Transportador configurado para el envío de emails
+ */
 const createTransporter = () => {
   // Si existe SENDGRID_API_KEY, usa SendGrid (recomendado para Render)
   if (process.env.SENDGRID_API_KEY) {
@@ -51,7 +69,10 @@ const createTransporter = () => {
   });
 };
 
-// Configurar el transportador de email
+/**
+ * Transportador de email configurado y listo para usar.
+ * @type {nodemailer.Transporter}
+ */
 export const transporter = createTransporter();
 
 // Verificar la conexión solo si está configurado
@@ -69,7 +90,19 @@ if (initialCheck.valid) {
   console.warn('Transporter de email no configurado - saltando verificación');
 }
 
-// Función para enviar email de recuperación de contraseña
+/**
+ * Envía un email de recuperación de contraseña al usuario.
+ * Genera un enlace con el token de reseteo que expira en 1 hora.
+ * 
+ * @async
+ * @param {string} email - Dirección de email del destinatario
+ * @param {string} resetToken - Token único para el reseteo de contraseña
+ * @returns {Promise<boolean>} Promesa que resuelve a true si el email se envió exitosamente
+ * @throws {Error} Si la configuración de email está incompleta o si falla el envío
+ * 
+ * @example
+ * await sendPasswordResetEmail('usuario@ejemplo.com', 'abc123token');
+ */
 export const sendPasswordResetEmail = async (
   email: string,
   resetToken: string
