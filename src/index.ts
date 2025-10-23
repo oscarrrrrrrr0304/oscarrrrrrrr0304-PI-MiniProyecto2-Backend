@@ -10,6 +10,7 @@ import dotenv from 'dotenv';
 import connectDB from './config/database';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
+import videoRoutes from './routes/videos';
 
 dotenv.config();
 
@@ -66,7 +67,8 @@ app.get('/', (req: express.Request, res: express.Response) => {
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth',
-      users: '/api/users'
+      users: '/api/users',
+      videos: '/api/videos'
     }
   });
 });
@@ -75,6 +77,8 @@ app.get('/', (req: express.Request, res: express.Response) => {
 app.use('/api/auth', authRoutes);
 /** Rutas de usuarios */
 app.use('/api/users', userRoutes);
+/** Rutas de videos */
+app.use('/api/videos', videoRoutes);
 
 /**
  * Middleware para manejar rutas no encontradas (404).
