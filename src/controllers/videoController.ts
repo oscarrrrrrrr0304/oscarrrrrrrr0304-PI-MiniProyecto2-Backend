@@ -28,6 +28,19 @@ interface PexelsVideoResponse {
       name: string;
       url: string;
     };
+    video_files: Array<{
+      id: number;
+      quality: string;
+      file_type: string;
+      width: number | null;
+      height: number | null;
+      link: string;
+    }>;
+    video_pictures: Array<{
+      id: number;
+      picture: string;
+      nr: number;
+    }>;
   }>;
 }
 
@@ -96,6 +109,8 @@ export const fetchVideosFromPexels = async (req: Request, res: Response): Promis
           image: video.image,
           duration: video.duration,
           user: video.user,
+          video_files: video.video_files,
+          video_pictures: video.video_pictures,
           likesCount: 0
         });
         

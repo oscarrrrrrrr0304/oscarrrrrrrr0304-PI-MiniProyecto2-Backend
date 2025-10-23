@@ -19,6 +19,38 @@ export interface PexelsUser {
 }
 
 /**
+ * Interface para los archivos de video en diferentes calidades.
+ * @interface VideoFile
+ */
+export interface VideoFile {
+  /** ID del archivo de video */
+  id: number;
+  /** Calidad del video (hd, sd, hls) */
+  quality: string;
+  /** Tipo de archivo (video/mp4, etc.) */
+  file_type: string;
+  /** Ancho del video (puede ser null) */
+  width: number | null;
+  /** Altura del video (puede ser null) */
+  height: number | null;
+  /** Link de descarga del video */
+  link: string;
+}
+
+/**
+ * Interface para las imágenes de preview del video.
+ * @interface VideoPicture
+ */
+export interface VideoPicture {
+  /** ID de la imagen */
+  id: number;
+  /** URL de la imagen de preview */
+  picture: string;
+  /** Número de la imagen */
+  nr: number;
+}
+
+/**
  * Interface que define la estructura de un documento de video.
  * @interface IVideo
  * @extends {Document}
@@ -38,6 +70,10 @@ export interface IVideo extends Document {
   duration: number;
   /** Usuario de Pexels que subió el video */
   user: PexelsUser;
+  /** Archivos de video en diferentes calidades */
+  video_files: VideoFile[];
+  /** Imágenes de preview del video */
+  video_pictures: VideoPicture[];
   /** Contador de likes que ha recibido el video */
   likesCount: number;
   /** Fecha de creación del documento */
@@ -60,6 +96,54 @@ const pexelsUserSchema = new Schema<PexelsUser>({
   },
   url: {
     type: String,
+    required: true
+  }
+}, { _id: false });
+
+/**
+ * Schema anidado para los archivos de video.
+ */
+const videoFileSchema = new Schema<VideoFile>({
+  id: {
+    type: Number,
+    required: true
+  },
+  quality: {
+    type: String,
+    required: true
+  },
+  file_type: {
+    type: String,
+    required: true
+  },
+  width: {
+    type: Number,
+    default: null
+  },
+  height: {
+    type: Number,
+    default: null
+  },
+  link: {
+    type: String,
+    required: true
+  }
+}, { _id: false });
+
+/**
+ * Schema anidado para las imágenes de preview.
+ */
+const videoPictureSchema = new Schema<VideoPicture>({
+  id: {
+    type: Number,
+    required: true
+  },
+  picture: {
+    type: String,
+    required: true
+  },
+  nr: {
+    type: Number,
     required: true
   }
 }, { _id: false });
@@ -101,6 +185,14 @@ const videoSchema = new Schema<IVideo>({
   user: {
     type: pexelsUserSchema,
     required: [true, 'El usuario es requerido']
+  },
+  video_files: {
+    type: [videoFileSchema],
+    required: [true, 'Los archivos de video son requeridos']
+  },
+  video_pictures: {
+    type: [videoPictureSchema],
+    required: [true, 'Las imágenes de preview son requeridas']
   },
   likesCount: {
     type: Number,
