@@ -4,7 +4,14 @@
  */
 
 import { Router } from 'express';
-import { register, login, getProfile, forgotPassword, resetPassword } from '../controllers/authController';
+import { 
+  register, 
+  login, 
+  getProfile, 
+  forgotPassword, 
+  resetPassword,
+  changePassword
+} from '../controllers/authController';
 import { auth } from '../middleware/auth';
 
 const router = Router();
@@ -36,6 +43,16 @@ router.post('/login', login);
  * @returns {Object} Datos del usuario
  */
 router.get('/profile', auth, getProfile);
+
+/**
+ * Ruta para cambiar la contraseña del usuario autenticado desde el perfil.
+ * @route POST /api/auth/change-password
+ * @access Protegida - Requiere token JWT
+ * @param {string} currentPassword - Contraseña actual
+ * @param {string} newPassword - Nueva contraseña
+ * @returns {Object} Mensaje de confirmación
+ */
+router.post('/change-password', auth, changePassword);
 
 /**
  * Ruta para solicitar el reseteo de contraseña.

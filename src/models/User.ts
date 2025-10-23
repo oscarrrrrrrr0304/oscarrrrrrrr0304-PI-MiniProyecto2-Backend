@@ -20,6 +20,8 @@ export interface IUser extends Document {
   password: string;
   /** Edad del usuario */
   age: number;
+  /** Array de IDs de videos favoritos del usuario */
+  favoriteVideos: string[];
   /** Token hasheado para reseteo de contraseña (opcional) */
   resetPasswordToken?: string;
   /** Fecha de expiración del token de reseteo (opcional) */
@@ -65,6 +67,10 @@ const userSchema = new Schema<IUser>({
     required: [true, 'La edad es requerida'],
     min: [0, 'La edad no puede ser negativa'],
     max: [120, 'La edad no puede ser mayor a 120 años']
+  },
+  favoriteVideos: {
+    type: [String],
+    default: []
   },
   resetPasswordToken: {
     type: String,

@@ -4,7 +4,15 @@
  */
 
 import { Router } from 'express';
-import { getAllUsers, getUserById, updateUser, deleteUser } from '../controllers/userController';
+import { 
+  getAllUsers, 
+  getUserById, 
+  updateUser, 
+  deleteUser,
+  addFavorite,
+  removeFavorite,
+  getFavorites
+} from '../controllers/userController';
 import { auth } from '../middleware/auth';
 
 const router = Router();
@@ -16,6 +24,32 @@ const router = Router();
  * @returns {Object} Lista de usuarios
  */
 router.get('/', auth, getAllUsers);
+
+/**
+ * Ruta para obtener los videos favoritos del usuario autenticado.
+ * @route GET /api/users/favorites
+ * @access Protegida - Requiere token JWT
+ * @returns {Object} Lista de IDs de videos favoritos
+ */
+router.get('/favorites', auth, getFavorites);
+
+/**
+ * Ruta para agregar un video a favoritos.
+ * @route POST /api/users/favorites
+ * @access Protegida - Requiere token JWT
+ * @param {string} videoId - ID del video a agregar
+ * @returns {Object} Lista actualizada de favoritos
+ */
+router.post('/favorites', auth, addFavorite);
+
+/**
+ * Ruta para eliminar un video de favoritos.
+ * @route DELETE /api/users/favorites/:videoId
+ * @access Protegida - Requiere token JWT
+ * @param {string} videoId - ID del video a eliminar
+ * @returns {Object} Lista actualizada de favoritos
+ */
+router.delete('/favorites/:videoId', auth, removeFavorite);
 
 /**
  * Ruta para obtener un usuario por ID.

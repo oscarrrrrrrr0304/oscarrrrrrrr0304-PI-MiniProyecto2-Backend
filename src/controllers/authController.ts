@@ -283,3 +283,59 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
+
+/**
+ * Cambia la contraseña del usuario autenticado desde el perfil.
+ * Requiere la contraseña actual para validación y la nueva contraseña.
+ * No requiere token de email, usa el token JWT de autenticación.
+ * 
+ * @async
+ * @param {AuthRequest} req - Request de Express con currentPassword y newPassword en el body
+ * @param {Response} res - Response de Express
+ * @returns {Promise<void>}
+ * 
+ * @example
+ * POST /api/auth/change-password
+ * Headers: { "Authorization": "Bearer <token>" }
+ * Body: { "currentPassword": "password123", "newPassword": "newPassword456" }
+ */
+export const changePassword = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user?._id;
+
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({ error: 'La contraseña actual y la nueva son requeridas' });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres' });
+      return;
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    // Verificar que la contraseña actual sea correcta
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      res.status(400).json({ error: 'La contraseña actual es incorrecta' });
+      return;
+    }
+
+    // Actualizar la contraseña
+    user.password = newPassword;
+    await user.save();
+
+    res.json({
+      message: 'Contraseña actualizada exitosamente'
+    });
+  } catch (error: any) {
+    console.error('Error cambiando contraseña:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};

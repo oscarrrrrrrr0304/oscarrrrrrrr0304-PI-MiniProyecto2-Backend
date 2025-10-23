@@ -24,6 +24,7 @@ const PORT = process.env.PORT || 3000;
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
+  'http://klipz.vercel.app',
   process.env.FRONTEND_URL || 'https://pi-mini-proyecto2-frontend.vercel.app'
 ].filter(Boolean); // Filtrar valores undefined
 
