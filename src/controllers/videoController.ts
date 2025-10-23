@@ -33,6 +33,8 @@ interface PexelsVideoResponse {
 
 /**
  * Obtiene videos de la API de Pexels y los guarda en la base de datos.
+ * Si se proporciona 'query', busca por ese término.
+ * Si no se proporciona 'query', trae los videos populares.
  * 
  * @async
  * @param {Request} req - Request de Express con query opcional para búsqueda
@@ -40,11 +42,12 @@ interface PexelsVideoResponse {
  * @returns {Promise<void>}
  * 
  * @example
- * GET /api/videos/fetch?query=nature&page=1&per_page=15
+ * GET /api/videos/fetch?query=nature&page=1&per_page=15 (buscar por término)
+ * GET /api/videos/fetch?page=1&per_page=15 (videos populares)
  */
 export const fetchVideosFromPexels = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { query = 'nature', page = '1', per_page = '15' } = req.query;
+    const { query, page = '1', per_page = '15' } = req.query;
     const apiKey = process.env.PEXELS_API_KEY;
 
     if (!apiKey) {
@@ -52,8 +55,15 @@ export const fetchVideosFromPexels = async (req: Request, res: Response): Promis
       return;
     }
 
+    // Si hay query, usar el endpoint de búsqueda; si no, usar el de populares
+    let url: string;
+    if (query && query !== '') {
+      url = `https://api.pexels.com/videos/search?query=${query}&page=${page}&per_page=${per_page}`;
+    } else {
+      url = `https://api.pexels.com/videos/popular?page=${page}&per_page=${per_page}`;
+    }
+
     // Hacer request a la API de Pexels
-    const url = `https://api.pexels.com/videos/search?query=${query}&page=${page}&per_page=${per_page}`;
     const response = await fetch(url, {
       headers: {
         'Authorization': apiKey
@@ -95,7 +105,9 @@ export const fetchVideosFromPexels = async (req: Request, res: Response): Promis
     }
 
     res.json({
-      message: 'Videos obtenidos y guardados exitosamente',
+      message: query 
+        ? `Videos de búsqueda "${query}" obtenidos y guardados exitosamente`
+        : 'Videos populares obtenidos y guardados exitosamente',
       page: data.page,
       per_page: data.per_page,
       total_results: data.total_results,
