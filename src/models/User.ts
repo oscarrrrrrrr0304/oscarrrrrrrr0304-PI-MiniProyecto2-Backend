@@ -20,8 +20,10 @@ export interface IUser extends Document {
   password: string;
   /** Edad del usuario */
   age: number;
-  /** Array de IDs de videos favoritos del usuario */
+  /** Array de IDs de videos favoritos del usuario (deprecated - usar moviesLiked) */
   favoriteVideos: string[];
+  /** Array de IDs de MongoDB de videos a los que el usuario dio like */
+  moviesLiked: mongoose.Types.ObjectId[];
   /** Token hasheado para reseteo de contraseña (opcional) */
   resetPasswordToken?: string;
   /** Fecha de expiración del token de reseteo (opcional) */
@@ -70,6 +72,10 @@ const userSchema = new Schema<IUser>({
   },
   favoriteVideos: {
     type: [String],
+    default: []
+  },
+  moviesLiked: {
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Video' }],
     default: []
   },
   resetPasswordToken: {
