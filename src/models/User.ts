@@ -1,18 +1,49 @@
+/**
+ * @fileoverview User model with validations and authentication methods.
+ * @module models/User
+ */
+
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 
+/**
+ * Interface that defines the structure of a user document.
+ * @interface IUser
+ * @extends {Document}
+ */
 export interface IUser extends Document {
+  /** User's full name */
   name: string;
+  /** User's unique email address */
   email: string;
+  /** User's hashed password */
   password: string;
+  /** User's age */
   age: number;
+  /** Array of user's favorite video IDs (deprecated - use moviesLiked) */
+  favoriteVideos: string[];
+  /** Array of MongoDB IDs of videos that the user liked */
+  moviesLiked: mongoose.Types.ObjectId[];
+  /** Hashed token for password reset (optional) */
   resetPasswordToken?: string;
+  /** Expiration date for reset token (optional) */
   resetPasswordExpires?: Date;
+  /** Document creation date */
   createdAt: Date;
+  /** Last document update date */
   updatedAt: Date;
+  /**
+   * Compares a plain text password with the user's hashed password.
+   * @param password - Plain text password to compare
+   * @returns Promise that resolves to true if passwords match
+   */
   comparePassword(password: string): Promise<boolean>;
 }
 
+/**
+ * Mongoose schema for User model.
+ * Includes validations and automatic timestamps configuration.
+ */
 const userSchema = new Schema<IUser>({
   name: {
     type: String,
@@ -39,6 +70,14 @@ const userSchema = new Schema<IUser>({
     min: [0, 'La edad no puede ser negativa'],
     max: [120, 'La edad no puede ser mayor a 120 años']
   },
+  favoriteVideos: {
+    type: [String],
+    default: []
+  },
+  moviesLiked: {
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Video' }],
+    default: []
+  },
   resetPasswordToken: {
     type: String,
     default: undefined
@@ -51,7 +90,10 @@ const userSchema = new Schema<IUser>({
   timestamps: true
 });
 
-// Middleware para hashear la contraseña antes de guardar
+/**
+ * Mongoose middleware that hashes the password before saving the document.
+ * Only executes if password has been modified.
+ */
 userSchema.pre('save', async function(next: any) {
   if (!this.isModified('password')) return next();
   
@@ -64,10 +106,18 @@ userSchema.pre('save', async function(next: any) {
   }
 });
 
-// Método para comparar contraseñas
+/**
+ * Instance method to compare a plain text password with the hashed one.
+ * @param password - Plain text password to verify
+ * @returns Promise that resolves to true if passwords match
+ */
 userSchema.methods.comparePassword = async function(password: string): Promise<boolean> {
   return await bcrypt.compare(password, this.password);
 };
 
+/**
+ * Mongoose model for the users collection.
+ * @type {mongoose.Model<IUser>}
+ */
 const User = mongoose.model<IUser>('User', userSchema);
 export { User };

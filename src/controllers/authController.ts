@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Authentication controller that handles registration, login, profile and password recovery.
+ * @module controllers/authController
+ */
+
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -5,6 +10,19 @@ import { User } from '../models/User';
 import { AuthRequest } from '../middleware/auth';
 import { sendPasswordResetEmail } from '../config/email';
 
+/**
+ * Registers a new user in the system.
+ * Validates that the email is not already registered, creates the user and generates a JWT token.
+ * 
+ * @async
+ * @param {Request} req - Express request with name, email, password and age in body
+ * @param {Response} res - Express response
+ * @returns {Promise<void>}
+ * 
+ * @example
+ * POST /api/auth/register
+ * Body: { "name": "John", "email": "john@example.com", "password": "123456", "age": 25 }
+ */
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, password, age } = req.body;
@@ -44,6 +62,19 @@ export const register = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+/**
+ * Logs in an existing user.
+ * Verifies credentials and generates a JWT token valid for 7 days.
+ * 
+ * @async
+ * @param {Request} req - Express request with email and password in body
+ * @param {Response} res - Express response
+ * @returns {Promise<void>}
+ * 
+ * @example
+ * POST /api/auth/login
+ * Body: { "email": "john@example.com", "password": "123456" }
+ */
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
@@ -73,6 +104,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         id: user._id,
         name: user.name,
         email: user.email,
+        moviesLiked: user.moviesLiked,
         age: user.age,
         createdAt: user.createdAt
       }
@@ -83,7 +115,20 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// Nueva función: Solicitar reseteo de contraseña
+/**
+ * Requests password reset for a user.
+ * Generates a reset token, saves it in database and sends an email to the user.
+ * The token expires in 1 hour.
+ * 
+ * @async
+ * @param {Request} req - Express request with email in body
+ * @param {Response} res - Express response
+ * @returns {Promise<void>}
+ * 
+ * @example
+ * POST /api/auth/forgot-password
+ * Body: { "email": "john@example.com" }
+ */
 export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email } = req.body;
@@ -137,7 +182,19 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
   }
 };
 
-// Nueva función: Resetear contraseña
+/**
+ * Resets user password using a valid token.
+ * Validates the token, updates the password and generates a new JWT token for automatic login.
+ * 
+ * @async
+ * @param {Request} req - Express request with token and newPassword in body
+ * @param {Response} res - Express response
+ * @returns {Promise<void>}
+ * 
+ * @example
+ * POST /api/auth/reset-password
+ * Body: { "token": "abc123token", "newPassword": "newPassword123" }
+ */
 export const resetPassword = async (req: Request, res: Response): Promise<void> => {
   try {
     const { token, newPassword } = req.body;
@@ -191,6 +248,19 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
   }
 };
 
+/**
+ * Gets the profile of the authenticated user.
+ * Requires a valid JWT token in the Authorization header.
+ * 
+ * @async
+ * @param {AuthRequest} req - Express request with authenticated user
+ * @param {Response} res - Express response
+ * @returns {Promise<void>}
+ * 
+ * @example
+ * GET /api/auth/profile
+ * Headers: { "Authorization": "Bearer <token>" }
+ */
 export const getProfile = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const user = req.user;
@@ -205,12 +275,69 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
         name: user.name,
         email: user.email,
         age: user.age,
+        moviesLiked: user.moviesLiked,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
       }
     });
   } catch (error: any) {
     console.error('Error obteniendo perfil:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+/**
+ * Changes the password of the authenticated user from the profile.
+ * Requires current password for validation and new password.
+ * Does not require email token, uses JWT authentication token.
+ * 
+ * @async
+ * @param {AuthRequest} req - Express request with currentPassword and newPassword in body
+ * @param {Response} res - Express response
+ * @returns {Promise<void>}
+ * 
+ * @example
+ * POST /api/auth/change-password
+ * Headers: { "Authorization": "Bearer <token>" }
+ * Body: { "currentPassword": "password123", "newPassword": "newPassword456" }
+ */
+export const changePassword = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user?._id;
+
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({ error: 'La contraseña actual y la nueva son requeridas' });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres' });
+      return;
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    // Verificar que la contraseña actual sea correcta
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      res.status(400).json({ error: 'La contraseña actual es incorrecta' });
+      return;
+    }
+
+    // Actualizar la contraseña
+    user.password = newPassword;
+    await user.save();
+
+    res.json({
+      message: 'Contraseña actualizada exitosamente'
+    });
+  } catch (error: any) {
+    console.error('Error cambiando contraseña:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };

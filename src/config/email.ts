@@ -1,36 +1,127 @@
+/**
+ * @fileoverview Email service configuration for sending emails.
+ * Supports SendGrid (recommended for production) and Gmail SMTP (for local development).
+ * @module config/email
+ */
+
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 
-// Cargar variables de entorno
+// Load environment variables
 dotenv.config();
 
-// Configurar el transportador de email
-export const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.EMAIL_PORT || '587'),
-  secure: false, // true para puerto 465, false para otros puertos
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
+/**
+ * Validates that required email credentials are configured in environment variables.
+ * 
+ * @returns {Object} Object with validation status
+ * @returns {boolean} returns.valid - Indicates if all required variables are present
+ * @returns {string[]} returns.missing - Array with names of missing variables
+ */
+const validateEmailConfig = (): { valid: boolean; missing: string[] } => {
+  const requiredVars = ['EMAIL_USER', 'SENDGRID_API_KEY'];
+  const missing = requiredVars.filter(varName => !process.env[varName]);
+  
+  if (missing.length > 0) {
+    console.warn(`Variables de email faltantes: ${missing.join(', ')}`);
+    console.warn('El servicio de recuperación de contraseña no funcionará correctamente');
+    return { valid: false, missing };
   }
-});
+  
+  console.log('Todas las variables de email están configuradas');
+  return { valid: true, missing: [] };
+};
 
-// Verificar la conexión
-transporter.verify(function (error: any, success: any) {
-  if (error) {
-    console.log('Error al conectar con el servidor de email:', error);
-  } else {
-    console.log('Servidor de email listo para enviar mensajes');
+// Validate at startup (for logs only)
+const initialCheck = validateEmailConfig();
+
+/**
+ * Creates and configures a Nodemailer transporter.
+ * Prioritizes SendGrid if available (recommended for Render and production).
+ * Otherwise, uses Gmail SMTP for local development.
+ * 
+ * @returns {nodemailer.Transporter} Configured transporter for sending emails
+ */
+const createTransporter = () => {
+  // Si existe SENDGRID_API_KEY, usa SendGrid (recomendado para Render)
+  if (process.env.SENDGRID_API_KEY) {
+    console.log('Usando SendGrid para envío de emails');
+    return nodemailer.createTransport({
+      host: 'smtp.sendgrid.net',
+      port: 2525,
+      secure: false,
+      auth: {
+        user: 'apikey',
+        pass: process.env.SENDGRID_API_KEY
+      }
+    });
   }
-});
+  
+  // Fallback a Gmail (para desarrollo local)
+  console.log('Usando Gmail SMTP para envío de emails');
+  return nodemailer.createTransport({
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.EMAIL_PORT || '587'),
+    secure: false,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD
+    }
+  });
+};
 
-// Función para enviar email de recuperación de contraseña
+/**
+ * Configured email transporter ready to use.
+ * @type {nodemailer.Transporter}
+ */
+export const transporter = createTransporter();
+
+// Verify connection only if configured
+if (initialCheck.valid) {
+  transporter.verify(function (error: any, success: any) {
+    if (error) {
+      console.error('Error al conectar con el servidor de email:', error.message);
+      console.error('Si estás en Render, asegúrate de usar SendGrid en lugar de Gmail SMTP');
+    } else {
+      console.log('Servidor de email listo para enviar mensajes');
+      console.log(`Email configurado: ${process.env.EMAIL_USER}`);
+    }
+  });
+} else {
+  console.warn('Transporter de email no configurado - saltando verificación');
+}
+
+/**
+ * Sends a password recovery email to the user.
+ * Generates a link with the reset token that expires in 1 hour.
+ * 
+ * @async
+ * @param {string} email - Recipient's email address
+ * @param {string} resetToken - Unique token for password reset
+ * @returns {Promise<boolean>} Promise that resolves to true if email was sent successfully
+ * @throws {Error} If email configuration is incomplete or if sending fails
+ * 
+ * @example
+ * await sendPasswordResetEmail('user@example.com', 'abc123token');
+ */
 export const sendPasswordResetEmail = async (
   email: string,
   resetToken: string
 ) => {
-  const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000';
+  // Validar configuración antes de enviar (validación en tiempo real)
+  const config = validateEmailConfig();
+  
+  if (!config.valid) {
+    console.error('No se puede enviar email. Variables faltantes:', config.missing);
+    throw new Error(`Configuración de email incompleta. Faltan: ${config.missing.join(', ')}`);
+  }
+
+  const frontendURL = process.env.FRONTEND_URL || 'http://localhost:5173';
   const resetURL = `${frontendURL}/reset-password/${resetToken}`;
+
+  console.log(`Preparando email de recuperación...`);
+  console.log(`   Para: ${email}`);
+  console.log(`   Desde: ${process.env.EMAIL_USER}`);
+  console.log(`   URL de reseteo: ${resetURL}`);
 
   const mailOptions = {
     from: `"${process.env.EMAIL_FROM_NAME || 'Tu App'}" <${process.env.EMAIL_USER}>`,
@@ -108,11 +199,22 @@ export const sendPasswordResetEmail = async (
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Email enviado:', info.messageId);
+    // Create a new transporter to ensure we have the most recent configuration
+    const currentTransporter = createTransporter();
+    const info = await currentTransporter.sendMail(mailOptions);
+    console.log('Email sent successfully!');
+    console.log(`   MessageID: ${info.messageId}`);
     return true;
-  } catch (error) {
-    console.error('Error al enviar email:', error);
+  } catch (error: any) {
+    console.error('Error sending email:');
+    console.error(`   Message: ${error.message}`);
+    console.error(`   Code: ${error.code || 'N/A'}`);
+    
+    // Show suggestions based on error
+    if (error.message.includes('timeout') || error.code === 'ETIMEDOUT') {
+      console.error('SOLUTION: Render blocks SMTP. Configure SENDGRID_API_KEY in environment variables');
+    }
+    
     throw error;
   }
 };
