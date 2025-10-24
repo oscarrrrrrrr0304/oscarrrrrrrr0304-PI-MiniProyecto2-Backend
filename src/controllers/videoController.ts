@@ -1,5 +1,5 @@
 /**
- * @fileoverview Controlador de videos que maneja operaciones con la API de Pexels y likes.
+ * @fileoverview Video controller that handles operations with Pexels API and likes.
  * @module controllers/videoController
  */
 
@@ -9,7 +9,7 @@ import { User } from '../models/User';
 import { AuthRequest } from '../middleware/auth';
 
 /**
- * Interfaz para la respuesta de la API de Pexels.
+ * Interface for Pexels API response.
  */
 interface PexelsVideoResponse {
   page: number;
@@ -45,18 +45,18 @@ interface PexelsVideoResponse {
 }
 
 /**
- * Obtiene videos de la API de Pexels y los guarda en la base de datos.
- * Si se proporciona 'query', busca por ese término.
- * Si no se proporciona 'query', trae los videos populares.
+ * Fetches videos from Pexels API and saves them to database.
+ * If 'query' is provided, searches by that term.
+ * If no 'query' is provided, fetches popular videos.
  * 
  * @async
- * @param {Request} req - Request de Express con query opcional para búsqueda
- * @param {Response} res - Response de Express
+ * @param {Request} req - Express request with optional query for search
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example
- * GET /api/videos/fetch?query=nature&page=1&per_page=15 (buscar por término)
- * GET /api/videos/fetch?page=1&per_page=15 (videos populares)
+ * GET /api/videos/fetch?query=nature&page=1&per_page=15 (search by term)
+ * GET /api/videos/fetch?page=1&per_page=15 (popular videos)
  */
 export const fetchVideosFromPexels = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -68,7 +68,7 @@ export const fetchVideosFromPexels = async (req: Request, res: Response): Promis
       return;
     }
 
-    // Si hay query, usar el endpoint de búsqueda; si no, usar el de populares
+    // If there's a query, use search endpoint; otherwise, use popular endpoint
     let url: string;
     if (query && query !== '') {
       url = `https://api.pexels.com/videos/search?query=${query}&page=${page}&per_page=${per_page}`;
@@ -76,7 +76,7 @@ export const fetchVideosFromPexels = async (req: Request, res: Response): Promis
       url = `https://api.pexels.com/videos/popular?page=${page}&per_page=${per_page}`;
     }
 
-    // Hacer request a la API de Pexels
+    // Make request to Pexels API
     const response = await fetch(url, {
       headers: {
         'Authorization': apiKey
@@ -93,7 +93,7 @@ export const fetchVideosFromPexels = async (req: Request, res: Response): Promis
 
     const data = await response.json() as PexelsVideoResponse;
 
-    // Guardar videos en la base de datos (o actualizar si ya existen)
+    // Save videos to database (or update if they already exist)
     const savedVideos = [];
     for (const video of data.videos) {
       const existingVideo = await Video.findOne({ pexelsId: video.id });
@@ -136,11 +136,11 @@ export const fetchVideosFromPexels = async (req: Request, res: Response): Promis
 };
 
 /**
- * Obtiene todos los videos almacenados en la base de datos.
+ * Gets all videos stored in the database.
  * 
  * @async
- * @param {Request} req - Request de Express con paginación opcional
- * @param {Response} res - Response de Express
+ * @param {Request} req - Express request with optional pagination
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example
@@ -172,11 +172,11 @@ export const getAllVideos = async (req: Request, res: Response): Promise<void> =
 };
 
 /**
- * Obtiene un video específico por su ID de MongoDB.
+ * Gets a specific video by its MongoDB ID.
  * 
  * @async
- * @param {Request} req - Request de Express con id en params
- * @param {Response} res - Response de Express
+ * @param {Request} req - Express request with id in params
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example
@@ -200,12 +200,12 @@ export const getVideoById = async (req: Request, res: Response): Promise<void> =
 };
 
 /**
- * Da o quita like a un video.
- * Actualiza el contador de likes del video y la lista de videos liked del usuario.
+ * Toggles like on a video (add or remove).
+ * Updates video's like counter and user's liked videos list.
  * 
  * @async
- * @param {AuthRequest} req - Request de Express con videoId en params
- * @param {Response} res - Response de Express
+ * @param {AuthRequest} req - Express request with videoId in params
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example
@@ -229,13 +229,13 @@ export const toggleLike = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    // Verificar si el usuario ya dio like al video
+    // Check if user already liked the video
     const alreadyLiked = user.moviesLiked.some(
       (id) => id.toString() === videoId
     );
 
     if (alreadyLiked) {
-      // Quitar like
+      // Remove like
       user.moviesLiked = user.moviesLiked.filter(
         (id) => id.toString() !== videoId
       );
@@ -245,12 +245,12 @@ export const toggleLike = async (req: AuthRequest, res: Response): Promise<void>
       await video.save();
 
       res.json({
-        message: 'Like removido',
+        message: 'Like removed',
         liked: false,
         likesCount: video.likesCount
       });
     } else {
-      // Agregar like
+      // Add like
       user.moviesLiked.push(video._id as any);
       video.likesCount += 1;
       
@@ -258,7 +258,7 @@ export const toggleLike = async (req: AuthRequest, res: Response): Promise<void>
       await video.save();
 
       res.json({
-        message: 'Like agregado',
+        message: 'Like added',
         liked: true,
         likesCount: video.likesCount
       });
@@ -270,11 +270,11 @@ export const toggleLike = async (req: AuthRequest, res: Response): Promise<void>
 };
 
 /**
- * Obtiene los videos a los que el usuario dio like.
+ * Gets videos that the user has liked.
  * 
  * @async
- * @param {AuthRequest} req - Request de Express
- * @param {Response} res - Response de Express
+ * @param {AuthRequest} req - Express request
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example
@@ -302,11 +302,11 @@ export const getLikedVideos = async (req: AuthRequest, res: Response): Promise<v
 };
 
 /**
- * Obtiene los videos más populares (con más likes).
+ * Gets the most popular videos (with most likes).
  * 
  * @async
- * @param {Request} req - Request de Express con limit opcional
- * @param {Response} res - Response de Express
+ * @param {Request} req - Express request with optional limit
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rutas de autenticación para registro, login, perfil y recuperación de contraseña.
+ * @fileoverview Authentication routes for registration, login, profile and password recovery.
  * @module routes/auth
  */
 

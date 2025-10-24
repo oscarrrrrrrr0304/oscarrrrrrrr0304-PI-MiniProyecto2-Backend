@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rutas para operaciones CRUD de usuarios.
+ * @fileoverview Routes for user CRUD operations.
  * @module routes/users
  */
 

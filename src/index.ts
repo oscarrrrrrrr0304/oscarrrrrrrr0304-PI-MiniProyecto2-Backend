@@ -1,6 +1,6 @@
 /**
- * @fileoverview Punto de entrada principal de la aplicación Express.
- * Configura middleware, rutas y conexión a la base de datos.
+ * @fileoverview Main entry point of the Express application.
+ * Configures middleware, routes and database connection.
  * @module index
  */
 
@@ -18,8 +18,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /**
- * Lista de orígenes permitidos para CORS.
- * Incluye localhost para desarrollo y la URL del frontend para producción.
+ * List of allowed origins for CORS.
+ * Includes localhost for development and frontend URL for production.
  * @type {string[]}
  */
 const allowedOrigins = [
@@ -27,21 +27,21 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://klipz.vercel.app',
   process.env.FRONTEND_URL || 'https://pi-mini-proyecto2-frontend.vercel.app'
-].filter(Boolean); // Filtrar valores undefined
+].filter(Boolean); // Filter undefined values
 
 /**
- * Configuración de CORS para permitir requests desde orígenes específicos.
- * Incluye validación de origen y configuración de métodos y headers permitidos.
+ * CORS configuration to allow requests from specific origins.
+ * Includes origin validation and configuration of allowed methods and headers.
  */
 app.use(cors({
   origin: (origin, callback) => {
-    // Permitir requests sin origin (como mobile apps o curl requests)
+    // Allow requests without origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
     if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = `El origen ${origin} del CORS no está permitido para acceder a este recurso.`;
+      const msg = `The origin ${origin} is not allowed by CORS to access this resource.`;
       console.error(msg);
-      console.log('Orígenes permitidos:', allowedOrigins);
+      console.log('Allowed origins:', allowedOrigins);
       return callback(new Error(msg), false);
     }
     return callback(null, true);
@@ -51,19 +51,19 @@ app.use(cors({
   credentials: true
 }));
 
-/** Middleware para parsear JSON en el body de las peticiones */
+/** Middleware to parse JSON in request body */
 app.use(express.json());
-/** Middleware para parsear datos de formularios URL-encoded */
+/** Middleware to parse URL-encoded form data */
 app.use(express.urlencoded({ extended: true }));
 
 /**
- * Ruta raíz que muestra información básica de la API.
+ * Root route that displays basic API information.
  * @route GET /
- * @returns {Object} Información de la API y endpoints disponibles
+ * @returns {Object} API information and available endpoints
  */
 app.get('/', (req: express.Request, res: express.Response) => {
   res.json({ 
-    message: 'API funcionando correctamente',
+    message: 'API working correctly',
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth',
@@ -73,61 +73,61 @@ app.get('/', (req: express.Request, res: express.Response) => {
   });
 });
 
-/** Rutas de autenticación */
+/** Authentication routes */
 app.use('/api/auth', authRoutes);
-/** Rutas de usuarios */
+/** User routes */
 app.use('/api/users', userRoutes);
-/** Rutas de videos */
+/** Video routes */
 app.use('/api/videos', videoRoutes);
 
 /**
- * Middleware para manejar rutas no encontradas (404).
- * @param {express.Request} req - Request de Express
- * @param {express.Response} res - Response de Express
+ * Middleware to handle 404 - Not Found routes.
+ * @param {express.Request} req - Express request object
+ * @param {express.Response} res - Express response object
  */
 app.use((req: express.Request, res: express.Response) => {
   res.status(404).json({ 
-    error: 'Ruta no encontrada'
+    error: 'Route not found'
   });
 });
 
 /**
- * Middleware global de manejo de errores.
- * Captura y maneja todos los errores no capturados en la aplicación.
+ * Global error handling middleware.
+ * Catches and handles all uncaught errors in the application.
  * 
- * @param {any} error - Error capturado
- * @param {express.Request} req - Request de Express
- * @param {express.Response} res - Response de Express
- * @param {express.NextFunction} next - NextFunction de Express
+ * @param {any} error - Caught error
+ * @param {express.Request} req - Express request object
+ * @param {express.Response} res - Express response object
+ * @param {express.NextFunction} next - Express next function
  */
 app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Error:', error);
   res.status(500).json({ 
-    error: 'Error interno del servidor',
+    error: 'Internal server error',
     message: process.env.NODE_ENV === 'development' ? error.message : undefined
   });
 });
 
 /**
- * Función asíncrona que inicia el servidor Express.
- * Conecta a la base de datos antes de iniciar el servidor.
+ * Async function that starts the Express server.
+ * Connects to the database before starting the server.
  * 
  * @async
  * @function startServer
- * @throws {Error} Si falla la conexión a la base de datos o al iniciar el servidor
+ * @throws {Error} If database connection or server start fails
  */
 const startServer = async () => {
   try {
     await connectDB();
     
     app.listen(PORT, () => {
-      console.log(`Servidor corriendo en puerto ${PORT}`);
-      console.log(`Entorno: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`CORS configurado para:`, allowedOrigins);
-      console.log(`Email configurado: ${process.env.EMAIL_USER ? 'SÍ' : 'NO'}`);
+      console.log(`Server running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`CORS configured for:`, allowedOrigins);
+      console.log(`Email configured: ${process.env.EMAIL_USER ? 'YES' : 'NO'}`);
     });
   } catch (error) {
-    console.error('Error al iniciar el servidor:', error);
+    console.error('Error starting server:', error);
     process.exit(1);
   }
 };

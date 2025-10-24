@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rutas para operaciones con videos de Pexels.
+ * @fileoverview Routes for operations with Pexels videos.
  * @module routes/videos
  */
 

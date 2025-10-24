@@ -1,89 +1,89 @@
 /**
- * @fileoverview Modelo de Video de Pexels con información y conteo de likes.
+ * @fileoverview Pexels video model with information and like counting.
  * @module models/Video
  */
 
 import mongoose, { Document, Schema } from 'mongoose';
 
 /**
- * Interface para el usuario de Pexels que subió el video.
+ * Interface for the Pexels user who uploaded the video.
  * @interface PexelsUser
  */
 export interface PexelsUser {
-  /** ID del usuario en Pexels */
+  /** User ID on Pexels */
   id: number;
-  /** Nombre del usuario */
+  /** User's name */
   name: string;
-  /** URL del perfil del usuario en Pexels */
+  /** User's profile URL on Pexels */
   url: string;
 }
 
 /**
- * Interface para los archivos de video en diferentes calidades.
+ * Interface for video files in different qualities.
  * @interface VideoFile
  */
 export interface VideoFile {
-  /** ID del archivo de video */
+  /** Video file ID */
   id: number;
-  /** Calidad del video (hd, sd, hls) */
+  /** Video quality (hd, sd, hls) */
   quality: string;
-  /** Tipo de archivo (video/mp4, etc.) */
+  /** File type (video/mp4, etc.) */
   file_type: string;
-  /** Ancho del video (puede ser null) */
+  /** Video width (can be null) */
   width: number | null;
-  /** Altura del video (puede ser null) */
+  /** Video height (can be null) */
   height: number | null;
-  /** Link de descarga del video */
+  /** Video download link */
   link: string;
 }
 
 /**
- * Interface para las imágenes de preview del video.
+ * Interface for video preview images.
  * @interface VideoPicture
  */
 export interface VideoPicture {
-  /** ID de la imagen */
+  /** Image ID */
   id: number;
-  /** URL de la imagen de preview */
+  /** Preview image URL */
   picture: string;
-  /** Número de la imagen */
+  /** Image number */
   nr: number;
 }
 
 /**
- * Interface que define la estructura de un documento de video.
+ * Interface that defines the structure of a video document.
  * @interface IVideo
  * @extends {Document}
  */
 export interface IVideo extends Document {
-  /** ID único del video en Pexels */
+  /** Unique video ID on Pexels */
   pexelsId: number;
-  /** Ancho del video en píxeles */
+  /** Video width in pixels */
   width: number;
-  /** Altura del video en píxeles */
+  /** Video height in pixels */
   height: number;
-  /** URL de la página del video en Pexels */
+  /** Video page URL on Pexels */
   url: string;
-  /** URL de la imagen de preview del video */
+  /** Video preview image URL */
   image: string;
-  /** Duración del video en segundos */
+  /** Video duration in seconds */
   duration: number;
-  /** Usuario de Pexels que subió el video */
+  /** Pexels user who uploaded the video */
   user: PexelsUser;
-  /** Archivos de video en diferentes calidades */
+  /** Video files in different qualities */
   video_files: VideoFile[];
-  /** Imágenes de preview del video */
+  /** Video preview images */
   video_pictures: VideoPicture[];
-  /** Contador de likes que ha recibido el video */
+  /** Number of likes the video has received */
   likesCount: number;
-  /** Fecha de creación del documento */
+  /** Document creation date */
   createdAt: Date;
-  /** Fecha de última actualización del documento */
+  /** Last document update date */
   updatedAt: Date;
 }
 
 /**
- * Schema anidado para el usuario de Pexels.
+ * Nested schema for Pexels user.
  */
 const pexelsUserSchema = new Schema<PexelsUser>({
   id: {
@@ -101,7 +101,7 @@ const pexelsUserSchema = new Schema<PexelsUser>({
 }, { _id: false });
 
 /**
- * Schema anidado para los archivos de video.
+ * Nested schema for video files.
  */
 const videoFileSchema = new Schema<VideoFile>({
   id: {
@@ -131,7 +131,7 @@ const videoFileSchema = new Schema<VideoFile>({
 }, { _id: false });
 
 /**
- * Schema anidado para las imágenes de preview.
+ * Nested schema for preview images.
  */
 const videoPictureSchema = new Schema<VideoPicture>({
   id: {
@@ -149,8 +149,8 @@ const videoPictureSchema = new Schema<VideoPicture>({
 }, { _id: false });
 
 /**
- * Schema de Mongoose para el modelo de Video.
- * Incluye validaciones y configuración de timestamps automáticos.
+ * Mongoose schema for Video model.
+ * Includes validations and automatic timestamps configuration.
  */
 const videoSchema = new Schema<IVideo>({
   pexelsId: {
@@ -204,12 +204,12 @@ const videoSchema = new Schema<IVideo>({
 });
 
 /**
- * Índice para búsquedas más rápidas por ID de Pexels.
+ * Index for faster searches by Pexels ID.
  */
 videoSchema.index({ pexelsId: 1 });
 
 /**
- * Modelo de Mongoose para la colección de videos.
+ * Mongoose model for the videos collection.
  * @type {mongoose.Model<IVideo>}
  */
 const Video = mongoose.model<IVideo>('Video', videoSchema);
