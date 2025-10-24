@@ -104,6 +104,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         id: user._id,
         name: user.name,
         email: user.email,
+        moviesLiked: user.moviesLiked,
         age: user.age,
         createdAt: user.createdAt
       }
@@ -274,6 +275,7 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
         name: user.name,
         email: user.email,
         age: user.age,
+        moviesLiked: user.moviesLiked,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
       }
