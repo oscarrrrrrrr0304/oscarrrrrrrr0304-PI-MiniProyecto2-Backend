@@ -329,3 +329,269 @@ export const getPopularVideos = async (req: Request, res: Response): Promise<voi
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
+
+/**
+ * Adds or updates a rating for a video.
+ * If the user already rated the video, updates the existing rating.
+ * 
+ * @async
+ * @param {AuthRequest} req - Express request with videoId in params and rating in body
+ * @param {Response} res - Express response
+ * @returns {Promise<void>}
+ * 
+ * @example
+ * POST /api/videos/:videoId/rating
+ * Headers: { "Authorization": "Bearer <token>" }
+ * Body: { "rating": 5 }
+ */
+export const addOrUpdateRating = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { videoId } = req.params;
+    const { rating } = req.body;
+    const userId = req.user?._id;
+
+    // Validate rating value
+    if (!rating || rating < 1 || rating > 5) {
+      res.status(400).json({ error: 'La calificación debe ser un número entre 1 y 5' });
+      return;
+    }
+
+    const video = await Video.findById(videoId);
+    if (!video) {
+      res.status(404).json({ error: 'Video no encontrado' });
+      return;
+    }
+
+    // Check if user already rated this video
+    const existingRatingIndex = video.ratings.findIndex(
+      (r) => r.userId.toString() === userId?.toString()
+    );
+
+    if (existingRatingIndex !== -1) {
+      // Update existing rating
+      video.ratings[existingRatingIndex].rating = rating;
+      video.ratings[existingRatingIndex].createdAt = new Date();
+    } else {
+      // Add new rating
+      video.ratings.push({
+        userId: userId as any,
+        rating,
+        createdAt: new Date()
+      });
+    }
+
+    // Calculate average rating
+    const totalRatings = video.ratings.reduce((sum, r) => sum + r.rating, 0);
+    video.averageRating = totalRatings / video.ratings.length;
+
+    await video.save();
+
+    res.json({
+      message: existingRatingIndex !== -1 ? 'Calificación actualizada' : 'Calificación agregada',
+      averageRating: video.averageRating,
+      totalRatings: video.ratings.length,
+      userRating: rating
+    });
+  } catch (error: any) {
+    console.error('Error agregando/actualizando calificación:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+/**
+ * Gets user's rating for a specific video.
+ * 
+ * @async
+ * @param {AuthRequest} req - Express request with videoId in params
+ * @param {Response} res - Express response
+ * @returns {Promise<void>}
+ * 
+ * @example
+ * GET /api/videos/:videoId/rating
+ * Headers: { "Authorization": "Bearer <token>" }
+ */
+export const getUserRating = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { videoId } = req.params;
+    const userId = req.user?._id;
+
+    const video = await Video.findById(videoId);
+    if (!video) {
+      res.status(404).json({ error: 'Video no encontrado' });
+      return;
+    }
+
+    const userRating = video.ratings.find(
+      (r) => r.userId.toString() === userId?.toString()
+    );
+
+    res.json({
+      userRating: userRating ? userRating.rating : null,
+      averageRating: video.averageRating,
+      totalRatings: video.ratings.length
+    });
+  } catch (error: any) {
+    console.error('Error obteniendo calificación del usuario:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+/**
+ * Adds a comment to a video.
+ * 
+ * @async
+ * @param {AuthRequest} req - Express request with videoId in params and text in body
+ * @param {Response} res - Express response
+ * @returns {Promise<void>}
+ * 
+ * @example
+ * POST /api/videos/:videoId/comments
+ * Headers: { "Authorization": "Bearer <token>" }
+ * Body: { "text": "Great video!" }
+ */
+export const addComment = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { videoId } = req.params;
+    const { text } = req.body;
+    const userId = req.user?._id;
+
+    if (!text || text.trim().length === 0) {
+      res.status(400).json({ error: 'El texto del comentario es requerido' });
+      return;
+    }
+
+    if (text.length > 500) {
+      res.status(400).json({ error: 'El comentario no puede exceder 500 caracteres' });
+      return;
+    }
+
+    const video = await Video.findById(videoId);
+    if (!video) {
+      res.status(404).json({ error: 'Video no encontrado' });
+      return;
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    // Add comment
+    const newComment = {
+      userId: userId as any,
+      userName: user.name,
+      text: text.trim(),
+      createdAt: new Date()
+    };
+
+    video.comments.push(newComment as any);
+    await video.save();
+
+    res.status(201).json({
+      message: 'Comentario agregado exitosamente',
+      comment: newComment,
+      totalComments: video.comments.length
+    });
+  } catch (error: any) {
+    console.error('Error agregando comentario:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+/**
+ * Gets all comments for a video.
+ * 
+ * @async
+ * @param {Request} req - Express request with videoId in params
+ * @param {Response} res - Express response
+ * @returns {Promise<void>}
+ * 
+ * @example
+ * GET /api/videos/:videoId/comments
+ */
+export const getComments = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { videoId } = req.params;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+
+    const video = await Video.findById(videoId);
+    if (!video) {
+      res.status(404).json({ error: 'Video no encontrado' });
+      return;
+    }
+
+    // Sort comments by date (newest first)
+    const sortedComments = video.comments.sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
+    // Paginate comments
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedComments = sortedComments.slice(startIndex, endIndex);
+
+    res.json({
+      comments: paginatedComments,
+      currentPage: page,
+      totalPages: Math.ceil(video.comments.length / limit),
+      totalComments: video.comments.length
+    });
+  } catch (error: any) {
+    console.error('Error obteniendo comentarios:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+/**
+ * Deletes a comment from a video.
+ * Only the comment author can delete their own comment.
+ * 
+ * @async
+ * @param {AuthRequest} req - Express request with videoId and commentId in params
+ * @param {Response} res - Express response
+ * @returns {Promise<void>}
+ * 
+ * @example
+ * DELETE /api/videos/:videoId/comments/:commentId
+ * Headers: { "Authorization": "Bearer <token>" }
+ */
+export const deleteComment = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { videoId, commentId } = req.params;
+    const userId = req.user?._id;
+
+    const video = await Video.findById(videoId);
+    if (!video) {
+      res.status(404).json({ error: 'Video no encontrado' });
+      return;
+    }
+
+    const commentIndex = video.comments.findIndex(
+      (c: any) => c._id.toString() === commentId
+    );
+
+    if (commentIndex === -1) {
+      res.status(404).json({ error: 'Comentario no encontrado' });
+      return;
+    }
+
+    // Check if user is the comment author
+    if (video.comments[commentIndex].userId.toString() !== userId?.toString()) {
+      res.status(403).json({ error: 'No tienes permiso para eliminar este comentario' });
+      return;
+    }
+
+    video.comments.splice(commentIndex, 1);
+    await video.save();
+
+    res.json({
+      message: 'Comentario eliminado exitosamente',
+      totalComments: video.comments.length
+    });
+  } catch (error: any) {
+    console.error('Error eliminando comentario:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};

@@ -51,6 +51,34 @@ export interface VideoPicture {
 }
 
 /**
+ * Interface for video ratings.
+ * @interface Rating
+ */
+export interface Rating {
+  /** User ID who gave the rating */
+  userId: mongoose.Types.ObjectId;
+  /** Rating value (1-5) */
+  rating: number;
+  /** Date when the rating was given */
+  createdAt: Date;
+}
+
+/**
+ * Interface for video comments.
+ * @interface Comment
+ */
+export interface Comment {
+  /** User ID who made the comment */
+  userId: mongoose.Types.ObjectId;
+  /** User's name */
+  userName: string;
+  /** Comment text */
+  text: string;
+  /** Date when the comment was made */
+  createdAt: Date;
+}
+
+/**
  * Interface that defines the structure of a video document.
  * @interface IVideo
  * @extends {Document}
@@ -76,6 +104,12 @@ export interface IVideo extends Document {
   video_pictures: VideoPicture[];
   /** Number of likes the video has received */
   likesCount: number;
+  /** Ratings given to the video */
+  ratings: Rating[];
+  /** Average rating (calculated) */
+  averageRating: number;
+  /** Comments on the video */
+  comments: Comment[];
   /** Document creation date */
   createdAt: Date;
   /** Last document update date */
@@ -149,6 +183,51 @@ const videoPictureSchema = new Schema<VideoPicture>({
 }, { _id: false });
 
 /**
+ * Nested schema for ratings.
+ */
+const ratingSchema = new Schema<Rating>({
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  rating: {
+    type: Number,
+    required: true,
+    min: [1, 'La calificación mínima es 1'],
+    max: [5, 'La calificación máxima es 5']
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+}, { _id: false });
+
+/**
+ * Nested schema for comments.
+ */
+const commentSchema = new Schema<Comment>({
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  userName: {
+    type: String,
+    required: true
+  },
+  text: {
+    type: String,
+    required: [true, 'El texto del comentario es requerido'],
+    maxlength: [500, 'El comentario no puede exceder 500 caracteres']
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+}, { _id: true });
+
+/**
  * Mongoose schema for Video model.
  * Includes validations and automatic timestamps configuration.
  */
@@ -198,6 +277,20 @@ const videoSchema = new Schema<IVideo>({
     type: Number,
     default: 0,
     min: [0, 'El conteo de likes no puede ser negativo']
+  },
+  ratings: {
+    type: [ratingSchema],
+    default: []
+  },
+  averageRating: {
+    type: Number,
+    default: 0,
+    min: [0, 'La calificación promedio no puede ser negativa'],
+    max: [5, 'La calificación promedio no puede ser mayor a 5']
+  },
+  comments: {
+    type: [commentSchema],
+    default: []
   }
 }, {
   timestamps: true
