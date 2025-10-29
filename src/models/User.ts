@@ -1,5 +1,5 @@
 /**
- * @fileoverview Modelo de Usuario con validaciones y métodos de autenticación.
+ * @fileoverview User model with validations and authentication methods.
  * @module models/User
  */
 
@@ -7,42 +7,42 @@ import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 
 /**
- * Interface que define la estructura de un documento de usuario.
+ * Interface that defines the structure of a user document.
  * @interface IUser
  * @extends {Document}
  */
 export interface IUser extends Document {
-  /** Nombre completo del usuario */
+  /** User's full name */
   name: string;
-  /** Correo electrónico único del usuario */
+  /** User's unique email address */
   email: string;
-  /** Contraseña hasheada del usuario */
+  /** User's hashed password */
   password: string;
-  /** Edad del usuario */
+  /** User's age */
   age: number;
-  /** Array de IDs de videos favoritos del usuario (deprecated - usar moviesLiked) */
+  /** Array of user's favorite video IDs (deprecated - use moviesLiked) */
   favoriteVideos: string[];
-  /** Array de IDs de MongoDB de videos a los que el usuario dio like */
+  /** Array of MongoDB IDs of videos that the user liked */
   moviesLiked: mongoose.Types.ObjectId[];
-  /** Token hasheado para reseteo de contraseña (opcional) */
+  /** Hashed token for password reset (optional) */
   resetPasswordToken?: string;
-  /** Fecha de expiración del token de reseteo (opcional) */
+  /** Expiration date for reset token (optional) */
   resetPasswordExpires?: Date;
-  /** Fecha de creación del documento */
+  /** Document creation date */
   createdAt: Date;
-  /** Fecha de última actualización del documento */
+  /** Last document update date */
   updatedAt: Date;
   /**
-   * Compara una contraseña en texto plano con la contraseña hasheada del usuario.
-   * @param password - Contraseña en texto plano a comparar
-   * @returns Promesa que resuelve a true si las contraseñas coinciden
+   * Compares a plain text password with the user's hashed password.
+   * @param password - Plain text password to compare
+   * @returns Promise that resolves to true if passwords match
    */
   comparePassword(password: string): Promise<boolean>;
 }
 
 /**
- * Schema de Mongoose para el modelo de Usuario.
- * Incluye validaciones y configuración de timestamps automáticos.
+ * Mongoose schema for User model.
+ * Includes validations and automatic timestamps configuration.
  */
 const userSchema = new Schema<IUser>({
   name: {
@@ -91,8 +91,8 @@ const userSchema = new Schema<IUser>({
 });
 
 /**
- * Middleware de Mongoose que hashea la contraseña antes de guardar el documento.
- * Solo se ejecuta si la contraseña ha sido modificada.
+ * Mongoose middleware that hashes the password before saving the document.
+ * Only executes if password has been modified.
  */
 userSchema.pre('save', async function(next: any) {
   if (!this.isModified('password')) return next();
@@ -107,16 +107,16 @@ userSchema.pre('save', async function(next: any) {
 });
 
 /**
- * Método de instancia para comparar una contraseña en texto plano con la hasheada.
- * @param password - Contraseña en texto plano a verificar
- * @returns Promesa que resuelve a true si las contraseñas coinciden
+ * Instance method to compare a plain text password with the hashed one.
+ * @param password - Plain text password to verify
+ * @returns Promise that resolves to true if passwords match
  */
 userSchema.methods.comparePassword = async function(password: string): Promise<boolean> {
   return await bcrypt.compare(password, this.password);
 };
 
 /**
- * Modelo de Mongoose para la colección de usuarios.
+ * Mongoose model for the users collection.
  * @type {mongoose.Model<IUser>}
  */
 const User = mongoose.model<IUser>('User', userSchema);

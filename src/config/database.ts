@@ -1,17 +1,17 @@
 /**
- * @fileoverview Configuración de la conexión a la base de datos MongoDB.
+ * @fileoverview MongoDB database connection configuration.
  * @module config/database
  */
 
 import mongoose from 'mongoose';
 
 /**
- * Establece la conexión con la base de datos MongoDB.
- * Utiliza la URI definida en la variable de entorno MONGODB_URI.
+ * Establishes connection to MongoDB database.
+ * Uses the URI defined in the MONGODB_URI environment variable.
  * 
  * @async
- * @returns {Promise<void>} Promesa que se resuelve cuando la conexión es exitosa
- * @throws {Error} Si MONGODB_URI no está definido o si falla la conexión
+ * @returns {Promise<void>} Promise that resolves when connection is successful
+ * @throws {Error} If MONGODB_URI is not defined or if connection fails
  * 
  * @example
  * await connectDB();
@@ -21,13 +21,13 @@ const connectDB = async (): Promise<void> => {
     const mongoUri = process.env.MONGODB_URI;
     
     if (!mongoUri) {
-      throw new Error('MONGODB_URI no está definido en las variables de entorno');
+      throw new Error('MONGODB_URI is not defined in environment variables');
     }
 
     await mongoose.connect(mongoUri);
-    console.log('Base de datos conectada exitosamente');
+    console.log('Database connected successfully');
   } catch (error) {
-    console.error('Error al conectar a la base de datos:', error);
+    console.error('Error connecting to database:', error);
     process.exit(1);
   }
 };

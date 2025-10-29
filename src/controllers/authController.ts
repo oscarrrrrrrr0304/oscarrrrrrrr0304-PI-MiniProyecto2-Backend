@@ -1,5 +1,5 @@
 /**
- * @fileoverview Controlador de autenticación que maneja registro, login, perfil y recuperación de contraseña.
+ * @fileoverview Authentication controller that handles registration, login, profile and password recovery.
  * @module controllers/authController
  */
 
@@ -11,17 +11,17 @@ import { AuthRequest } from '../middleware/auth';
 import { sendPasswordResetEmail } from '../config/email';
 
 /**
- * Registra un nuevo usuario en el sistema.
- * Valida que el email no esté ya registrado, crea el usuario y genera un token JWT.
+ * Registers a new user in the system.
+ * Validates that the email is not already registered, creates the user and generates a JWT token.
  * 
  * @async
- * @param {Request} req - Request de Express con name, email, password y age en el body
- * @param {Response} res - Response de Express
+ * @param {Request} req - Express request with name, email, password and age in body
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example
  * POST /api/auth/register
- * Body: { "name": "Juan", "email": "juan@ejemplo.com", "password": "123456", "age": 25 }
+ * Body: { "name": "John", "email": "john@example.com", "password": "123456", "age": 25 }
  */
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -63,17 +63,17 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 };
 
 /**
- * Inicia sesión de un usuario existente.
- * Verifica las credenciales y genera un token JWT válido por 7 días.
+ * Logs in an existing user.
+ * Verifies credentials and generates a JWT token valid for 7 days.
  * 
  * @async
- * @param {Request} req - Request de Express con email y password en el body
- * @param {Response} res - Response de Express
+ * @param {Request} req - Express request with email and password in body
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example
  * POST /api/auth/login
- * Body: { "email": "juan@ejemplo.com", "password": "123456" }
+ * Body: { "email": "john@example.com", "password": "123456" }
  */
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -116,18 +116,18 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 };
 
 /**
- * Solicita el reseteo de contraseña para un usuario.
- * Genera un token de reseteo, lo guarda en la base de datos y envía un email al usuario.
- * El token expira en 1 hora.
+ * Requests password reset for a user.
+ * Generates a reset token, saves it in database and sends an email to the user.
+ * The token expires in 1 hour.
  * 
  * @async
- * @param {Request} req - Request de Express con email en el body
- * @param {Response} res - Response de Express
+ * @param {Request} req - Express request with email in body
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example
  * POST /api/auth/forgot-password
- * Body: { "email": "juan@ejemplo.com" }
+ * Body: { "email": "john@example.com" }
  */
 export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -183,17 +183,17 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
 };
 
 /**
- * Resetea la contraseña de un usuario utilizando un token válido.
- * Valida el token, actualiza la contraseña y genera un nuevo token JWT para login automático.
+ * Resets user password using a valid token.
+ * Validates the token, updates the password and generates a new JWT token for automatic login.
  * 
  * @async
- * @param {Request} req - Request de Express con token y newPassword en el body
- * @param {Response} res - Response de Express
+ * @param {Request} req - Express request with token and newPassword in body
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example
  * POST /api/auth/reset-password
- * Body: { "token": "abc123token", "newPassword": "nuevaPassword123" }
+ * Body: { "token": "abc123token", "newPassword": "newPassword123" }
  */
 export const resetPassword = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -249,12 +249,12 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
 };
 
 /**
- * Obtiene el perfil del usuario autenticado.
- * Requiere un token JWT válido en el header Authorization.
+ * Gets the profile of the authenticated user.
+ * Requires a valid JWT token in the Authorization header.
  * 
  * @async
- * @param {AuthRequest} req - Request de Express con usuario autenticado
- * @param {Response} res - Response de Express
+ * @param {AuthRequest} req - Express request with authenticated user
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example
@@ -287,13 +287,13 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
 };
 
 /**
- * Cambia la contraseña del usuario autenticado desde el perfil.
- * Requiere la contraseña actual para validación y la nueva contraseña.
- * No requiere token de email, usa el token JWT de autenticación.
+ * Changes the password of the authenticated user from the profile.
+ * Requires current password for validation and new password.
+ * Does not require email token, uses JWT authentication token.
  * 
  * @async
- * @param {AuthRequest} req - Request de Express con currentPassword y newPassword en el body
- * @param {Response} res - Response de Express
+ * @param {AuthRequest} req - Express request with currentPassword and newPassword in body
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example

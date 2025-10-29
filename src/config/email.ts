@@ -1,21 +1,21 @@
 /**
- * @fileoverview Configuración del servicio de email para el envío de correos electrónicos.
- * Soporta SendGrid (recomendado para producción) y Gmail SMTP (para desarrollo local).
+ * @fileoverview Email service configuration for sending emails.
+ * Supports SendGrid (recommended for production) and Gmail SMTP (for local development).
  * @module config/email
  */
 
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 
-// Cargar variables de entorno
+// Load environment variables
 dotenv.config();
 
 /**
- * Valida que las credenciales de email requeridas estén configuradas en las variables de entorno.
+ * Validates that required email credentials are configured in environment variables.
  * 
- * @returns {Object} Objeto con el estado de validación
- * @returns {boolean} returns.valid - Indica si todas las variables requeridas están presentes
- * @returns {string[]} returns.missing - Array con los nombres de las variables faltantes
+ * @returns {Object} Object with validation status
+ * @returns {boolean} returns.valid - Indicates if all required variables are present
+ * @returns {string[]} returns.missing - Array with names of missing variables
  */
 const validateEmailConfig = (): { valid: boolean; missing: string[] } => {
   const requiredVars = ['EMAIL_USER', 'SENDGRID_API_KEY'];
@@ -31,15 +31,15 @@ const validateEmailConfig = (): { valid: boolean; missing: string[] } => {
   return { valid: true, missing: [] };
 };
 
-// Validar al inicio (solo para logs)
+// Validate at startup (for logs only)
 const initialCheck = validateEmailConfig();
 
 /**
- * Crea y configura un transportador de Nodemailer.
- * Prioriza SendGrid si está disponible (recomendado para Render y producción).
- * En su defecto, utiliza Gmail SMTP para desarrollo local.
+ * Creates and configures a Nodemailer transporter.
+ * Prioritizes SendGrid if available (recommended for Render and production).
+ * Otherwise, uses Gmail SMTP for local development.
  * 
- * @returns {nodemailer.Transporter} Transportador configurado para el envío de emails
+ * @returns {nodemailer.Transporter} Configured transporter for sending emails
  */
 const createTransporter = () => {
   // Si existe SENDGRID_API_KEY, usa SendGrid (recomendado para Render)
@@ -70,12 +70,12 @@ const createTransporter = () => {
 };
 
 /**
- * Transportador de email configurado y listo para usar.
+ * Configured email transporter ready to use.
  * @type {nodemailer.Transporter}
  */
 export const transporter = createTransporter();
 
-// Verificar la conexión solo si está configurado
+// Verify connection only if configured
 if (initialCheck.valid) {
   transporter.verify(function (error: any, success: any) {
     if (error) {
@@ -91,17 +91,17 @@ if (initialCheck.valid) {
 }
 
 /**
- * Envía un email de recuperación de contraseña al usuario.
- * Genera un enlace con el token de reseteo que expira en 1 hora.
+ * Sends a password recovery email to the user.
+ * Generates a link with the reset token that expires in 1 hour.
  * 
  * @async
- * @param {string} email - Dirección de email del destinatario
- * @param {string} resetToken - Token único para el reseteo de contraseña
- * @returns {Promise<boolean>} Promesa que resuelve a true si el email se envió exitosamente
- * @throws {Error} Si la configuración de email está incompleta o si falla el envío
+ * @param {string} email - Recipient's email address
+ * @param {string} resetToken - Unique token for password reset
+ * @returns {Promise<boolean>} Promise that resolves to true if email was sent successfully
+ * @throws {Error} If email configuration is incomplete or if sending fails
  * 
  * @example
- * await sendPasswordResetEmail('usuario@ejemplo.com', 'abc123token');
+ * await sendPasswordResetEmail('user@example.com', 'abc123token');
  */
 export const sendPasswordResetEmail = async (
   email: string,
@@ -199,20 +199,20 @@ export const sendPasswordResetEmail = async (
   };
 
   try {
-    // Crear un nuevo transportador para asegurarnos de tener la configuración más reciente
+    // Create a new transporter to ensure we have the most recent configuration
     const currentTransporter = createTransporter();
     const info = await currentTransporter.sendMail(mailOptions);
-    console.log('Email enviado exitosamente!');
+    console.log('Email sent successfully!');
     console.log(`   MessageID: ${info.messageId}`);
     return true;
   } catch (error: any) {
-    console.error('Error al enviar email:');
-    console.error(`   Mensaje: ${error.message}`);
-    console.error(`   Código: ${error.code || 'N/A'}`);
+    console.error('Error sending email:');
+    console.error(`   Message: ${error.message}`);
+    console.error(`   Code: ${error.code || 'N/A'}`);
     
-    // Mostrar sugerencias según el error
+    // Show suggestions based on error
     if (error.message.includes('timeout') || error.code === 'ETIMEDOUT') {
-      console.error('SOLUCION: Render bloquea SMTP. Configura SENDGRID_API_KEY en las variables de entorno');
+      console.error('SOLUTION: Render blocks SMTP. Configure SENDGRID_API_KEY in environment variables');
     }
     
     throw error;

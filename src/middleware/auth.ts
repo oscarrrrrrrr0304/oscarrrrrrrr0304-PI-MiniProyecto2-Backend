@@ -1,5 +1,5 @@
 /**
- * @fileoverview Middleware de autenticación JWT para proteger rutas.
+ * @fileoverview JWT authentication middleware to protect routes.
  * @module middleware/auth
  */
 
@@ -8,23 +8,23 @@ import jwt from 'jsonwebtoken';
 import { User, IUser } from '../models/User';
 
 /**
- * Interface que extiende Request de Express para incluir información del usuario autenticado.
+ * Interface that extends Express Request to include authenticated user information.
  * @interface AuthRequest
  * @extends {Request}
  */
 export interface AuthRequest extends Request {
-  /** Usuario autenticado obtenido del token JWT */
+  /** Authenticated user obtained from JWT token */
   user?: IUser;
 }
 
 /**
- * Middleware de autenticación que verifica el token JWT en el header Authorization.
- * Si el token es válido, adjunta el usuario al objeto request.
+ * Authentication middleware that verifies JWT token in Authorization header.
+ * If token is valid, attaches the user to the request object.
  * 
  * @async
- * @param {AuthRequest} req - Request de Express
- * @param {Response} res - Response de Express
- * @param {NextFunction} next - Función next de Express
+ * @param {AuthRequest} req - Express request
+ * @param {Response} res - Express response
+ * @param {NextFunction} next - Express next function
  * @returns {Promise<void>}
  * 
  * @example

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Controlador de usuarios que maneja operaciones CRUD sobre usuarios.
+ * @fileoverview User controller that handles CRUD operations on users.
  * @module controllers/userController
  */
 
@@ -8,12 +8,12 @@ import { User } from '../models/User';
 import { AuthRequest } from '../middleware/auth';
 
 /**
- * Obtiene todos los usuarios registrados en el sistema.
- * Excluye las contraseñas de los resultados.
+ * Gets all registered users in the system.
+ * Excludes passwords from results.
  * 
  * @async
- * @param {AuthRequest} req - Request de Express con usuario autenticado
- * @param {Response} res - Response de Express
+ * @param {AuthRequest} req - Express request with authenticated user
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example
@@ -35,12 +35,12 @@ export const getAllUsers = async (req: AuthRequest, res: Response): Promise<void
 };
 
 /**
- * Obtiene un usuario específico por su ID.
- * Excluye la contraseña del resultado.
+ * Gets a specific user by ID.
+ * Excludes password from result.
  * 
  * @async
- * @param {Request} req - Request de Express con id en params
- * @param {Response} res - Response de Express
+ * @param {Request} req - Express request with id in params
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example
@@ -68,18 +68,18 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 };
 
 /**
- * Actualiza los datos de un usuario.
- * Solo el propio usuario puede actualizar sus datos.
+ * Updates user data.
+ * Only the user themselves can update their data.
  * 
  * @async
- * @param {AuthRequest} req - Request de Express con id en params y name, email, age en body
- * @param {Response} res - Response de Express
+ * @param {AuthRequest} req - Express request with id in params and name, email, age in body
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example
  * PUT /api/users/:id
  * Headers: { "Authorization": "Bearer <token>" }
- * Body: { "name": "Nuevo Nombre", "email": "nuevo@email.com", "age": 30 }
+ * Body: { "name": "New Name", "email": "new@email.com", "age": 30 }
  */
 export const updateUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -113,12 +113,12 @@ export const updateUser = async (req: AuthRequest, res: Response): Promise<void>
 };
 
 /**
- * Elimina un usuario del sistema.
- * Solo el propio usuario puede eliminarse a sí mismo.
+ * Deletes a user from the system.
+ * Only the user themselves can delete their account.
  * 
  * @async
- * @param {AuthRequest} req - Request de Express con id en params
- * @param {Response} res - Response de Express
+ * @param {AuthRequest} req - Express request with id in params
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example
@@ -151,11 +151,11 @@ export const deleteUser = async (req: AuthRequest, res: Response): Promise<void>
 };
 
 /**
- * Agrega un video a los favoritos del usuario.
+ * Adds a video to user's favorites.
  * 
  * @async
- * @param {AuthRequest} req - Request de Express con videoId en body
- * @param {Response} res - Response de Express
+ * @param {AuthRequest} req - Express request with videoId in body
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example
@@ -199,11 +199,11 @@ export const addFavorite = async (req: AuthRequest, res: Response): Promise<void
 };
 
 /**
- * Elimina un video de los favoritos del usuario.
+ * Removes a video from user's favorites.
  * 
  * @async
- * @param {AuthRequest} req - Request de Express con videoId en params
- * @param {Response} res - Response de Express
+ * @param {AuthRequest} req - Express request with videoId in params
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example
@@ -243,11 +243,11 @@ export const removeFavorite = async (req: AuthRequest, res: Response): Promise<v
 };
 
 /**
- * Obtiene la lista de videos favoritos del usuario.
+ * Gets user's favorite videos list.
  * 
  * @async
- * @param {AuthRequest} req - Request de Express
- * @param {Response} res - Response de Express
+ * @param {AuthRequest} req - Express request
+ * @param {Response} res - Express response
  * @returns {Promise<void>}
  * 
  * @example
