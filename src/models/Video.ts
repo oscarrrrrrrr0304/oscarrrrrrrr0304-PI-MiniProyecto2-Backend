@@ -96,6 +96,8 @@ export interface IVideo extends Document {
   image: string;
   /** Video duration in seconds */
   duration: number;
+  /** Tags associated with the video */
+  tags: string[];
   /** Pexels user who uploaded the video */
   user: PexelsUser;
   /** Video files in different qualities */
@@ -219,7 +221,7 @@ const commentSchema = new Schema<Comment>({
   text: {
     type: String,
     required: [true, 'El texto del comentario es requerido'],
-    maxlength: [500, 'El comentario no puede exceder 500 caracteres']
+    maxlength: [1000, 'El comentario no puede exceder 1000 caracteres']
   },
   createdAt: {
     type: Date,
@@ -260,6 +262,10 @@ const videoSchema = new Schema<IVideo>({
     type: Number,
     required: [true, 'La duración es requerida'],
     min: [0, 'La duración no puede ser negativa']
+  },
+  tags: {
+    type: [String],
+    default: []
   },
   user: {
     type: pexelsUserSchema,

@@ -13,9 +13,12 @@ import {
   getPopularVideos,
   addOrUpdateRating,
   getUserRating,
+  deleteRating,
   addComment,
   getComments,
-  deleteComment
+  editComment,
+  deleteComment,
+  getRatingStats
 } from '../controllers/videoController';
 import { auth } from '../middleware/auth';
 
@@ -93,6 +96,23 @@ router.post('/:videoId/rating', auth, addOrUpdateRating);
 router.get('/:videoId/rating', auth, getUserRating);
 
 /**
+ * Ruta para eliminar la calificación de un video.
+ * @route DELETE /api/videos/:videoId/rating
+ * @access Protegida - Requiere token JWT
+ * @param {string} videoId - ID del video en MongoDB
+ * @returns {Object} Confirmación de eliminación y nuevo promedio
+ */
+router.delete('/:videoId/rating', auth, deleteRating);
+
+/**
+ * Ruta para obtener estadísticas de calificaciones de un video.
+ * @route GET /api/videos/:videoId/rating/stats
+ * @param {string} videoId - ID del video en MongoDB
+ * @returns {Object} Estadísticas de calificaciones (promedio, total, distribución)
+ */
+router.get('/:videoId/rating/stats', getRatingStats);
+
+/**
  * Ruta para agregar un comentario a un video.
  * @route POST /api/videos/:videoId/comments
  * @access Protegida - Requiere token JWT
@@ -111,6 +131,17 @@ router.post('/:videoId/comments', auth, addComment);
  * @returns {Object} Lista paginada de comentarios
  */
 router.get('/:videoId/comments', getComments);
+
+/**
+ * Ruta para editar un comentario.
+ * @route PUT /api/videos/:videoId/comments/:commentId
+ * @access Protegida - Requiere token JWT
+ * @param {string} videoId - ID del video en MongoDB
+ * @param {string} commentId - ID del comentario
+ * @body {string} text - Nuevo texto del comentario
+ * @returns {Object} Comentario editado
+ */
+router.put('/:videoId/comments/:commentId', auth, editComment);
 
 /**
  * Ruta para eliminar un comentario.

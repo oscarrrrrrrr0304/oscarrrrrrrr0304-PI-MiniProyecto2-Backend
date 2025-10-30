@@ -23,6 +23,7 @@ interface PexelsVideoResponse {
     url: string;
     image: string;
     duration: number;
+    tags: string[];
     user: {
       id: number;
       name: string;
@@ -108,6 +109,7 @@ export const fetchVideosFromPexels = async (req: Request, res: Response): Promis
           url: video.url,
           image: video.image,
           duration: video.duration,
+          tags: video.tags || [],
           user: video.user,
           video_files: video.video_files,
           video_pictures: video.video_pictures,
@@ -437,6 +439,62 @@ export const getUserRating = async (req: AuthRequest, res: Response): Promise<vo
 };
 
 /**
+ * Deletes user's rating for a specific video.
+ * 
+ * @async
+ * @param {AuthRequest} req - Express request with videoId in params
+ * @param {Response} res - Express response
+ * @returns {Promise<void>}
+ * 
+ * @example
+ * DELETE /api/videos/:videoId/rating
+ * Headers: { "Authorization": "Bearer <token>" }
+ */
+export const deleteRating = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { videoId } = req.params;
+    const userId = req.user?._id;
+
+    const video = await Video.findById(videoId);
+    if (!video) {
+      res.status(404).json({ error: 'Video no encontrado' });
+      return;
+    }
+
+    const ratingIndex = video.ratings.findIndex(
+      (r) => r.userId.toString() === userId?.toString()
+    );
+
+    if (ratingIndex === -1) {
+      res.status(404).json({ error: 'No has calificado este video' });
+      return;
+    }
+
+    // Remove rating
+    video.ratings.splice(ratingIndex, 1);
+
+    // Recalculate average rating
+    if (video.ratings.length > 0) {
+      const totalRatings = video.ratings.reduce((sum, r) => sum + r.rating, 0);
+      video.averageRating = totalRatings / video.ratings.length;
+    } else {
+      video.averageRating = 0;
+    }
+
+    await video.save();
+
+    res.json({
+      message: 'Calificación eliminada exitosamente',
+      averageRating: video.averageRating,
+      totalRatings: video.ratings.length
+    });
+  } catch (error: any) {
+    console.error('Error eliminando calificación:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+/**
  * Adds a comment to a video.
  * 
  * @async
@@ -460,8 +518,8 @@ export const addComment = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    if (text.length > 500) {
-      res.status(400).json({ error: 'El comentario no puede exceder 500 caracteres' });
+    if (text.length > 1000) {
+      res.status(400).json({ error: 'El comentario no puede exceder 1000 caracteres' });
       return;
     }
 
@@ -545,6 +603,72 @@ export const getComments = async (req: Request, res: Response): Promise<void> =>
 };
 
 /**
+ * Edits a comment from a video.
+ * Only the comment author can edit their own comment.
+ * 
+ * @async
+ * @param {AuthRequest} req - Express request with videoId and commentId in params, and text in body
+ * @param {Response} res - Express response
+ * @returns {Promise<void>}
+ * 
+ * @example
+ * PUT /api/videos/:videoId/comments/:commentId
+ * Headers: { "Authorization": "Bearer <token>" }
+ * Body: { "text": "Updated comment text" }
+ */
+export const editComment = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { videoId, commentId } = req.params;
+    const { text } = req.body;
+    const userId = req.user?._id;
+
+    if (!text || text.trim().length === 0) {
+      res.status(400).json({ error: 'El texto del comentario es requerido' });
+      return;
+    }
+
+    if (text.length > 1000) {
+      res.status(400).json({ error: 'El comentario no puede exceder 1000 caracteres' });
+      return;
+    }
+
+    const video = await Video.findById(videoId);
+    if (!video) {
+      res.status(404).json({ error: 'Video no encontrado' });
+      return;
+    }
+
+    const commentIndex = video.comments.findIndex(
+      (c: any) => c._id.toString() === commentId
+    );
+
+    if (commentIndex === -1) {
+      res.status(404).json({ error: 'Comentario no encontrado' });
+      return;
+    }
+
+    // Check if user is the comment author
+    if (video.comments[commentIndex].userId.toString() !== userId?.toString()) {
+      res.status(403).json({ error: 'No tienes permiso para editar este comentario' });
+      return;
+    }
+
+    // Update comment text
+    video.comments[commentIndex].text = text.trim();
+    await video.save();
+
+    res.json({
+      message: 'Comentario editado exitosamente',
+      comment: video.comments[commentIndex],
+      totalComments: video.comments.length
+    });
+  } catch (error: any) {
+    console.error('Error editando comentario:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+/**
  * Deletes a comment from a video.
  * Only the comment author can delete their own comment.
  * 
@@ -592,6 +716,63 @@ export const deleteComment = async (req: AuthRequest, res: Response): Promise<vo
     });
   } catch (error: any) {
     console.error('Error eliminando comentario:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+/**
+ * Gets rating statistics for a video.
+ * Returns the average rating, total ratings, and rating distribution (1-5 stars).
+ * 
+ * @async
+ * @param {Request} req - Express request with videoId in params
+ * @param {Response} res - Express response
+ * @returns {Promise<void>}
+ * 
+ * @example
+ * GET /api/videos/:videoId/rating/stats
+ */
+export const getRatingStats = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { videoId } = req.params;
+
+    const video = await Video.findById(videoId);
+    if (!video) {
+      res.status(404).json({ error: 'Video no encontrado' });
+      return;
+    }
+
+    // Calculate rating distribution (how many 1-star, 2-star, etc.)
+    const distribution = {
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0
+    };
+
+    video.ratings.forEach(r => {
+      distribution[r.rating as keyof typeof distribution]++;
+    });
+
+    // Calculate percentage for each rating
+    const totalRatings = video.ratings.length;
+    const distributionPercentage = {
+      1: totalRatings > 0 ? ((distribution[1] / totalRatings) * 100).toFixed(1) : '0.0',
+      2: totalRatings > 0 ? ((distribution[2] / totalRatings) * 100).toFixed(1) : '0.0',
+      3: totalRatings > 0 ? ((distribution[3] / totalRatings) * 100).toFixed(1) : '0.0',
+      4: totalRatings > 0 ? ((distribution[4] / totalRatings) * 100).toFixed(1) : '0.0',
+      5: totalRatings > 0 ? ((distribution[5] / totalRatings) * 100).toFixed(1) : '0.0'
+    };
+
+    res.json({
+      averageRating: video.averageRating,
+      totalRatings: totalRatings,
+      distribution: distribution,
+      distributionPercentage: distributionPercentage
+    });
+  } catch (error: any) {
+    console.error('Error obteniendo estadísticas de calificaciones:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
