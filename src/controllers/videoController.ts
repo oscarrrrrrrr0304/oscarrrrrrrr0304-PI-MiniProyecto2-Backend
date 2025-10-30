@@ -722,7 +722,7 @@ export const deleteComment = async (req: AuthRequest, res: Response): Promise<vo
 
 /**
  * Gets rating statistics for a video.
- * Returns the average rating, total ratings, and rating distribution (1-5 stars).
+ * Returns the average rating, total ratings, and the ratings array.
  * 
  * @async
  * @param {Request} req - Express request with videoId in params
@@ -742,34 +742,10 @@ export const getRatingStats = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Calculate rating distribution (how many 1-star, 2-star, etc.)
-    const distribution = {
-      1: 0,
-      2: 0,
-      3: 0,
-      4: 0,
-      5: 0
-    };
-
-    video.ratings.forEach(r => {
-      distribution[r.rating as keyof typeof distribution]++;
-    });
-
-    // Calculate percentage for each rating
-    const totalRatings = video.ratings.length;
-    const distributionPercentage = {
-      1: totalRatings > 0 ? ((distribution[1] / totalRatings) * 100).toFixed(1) : '0.0',
-      2: totalRatings > 0 ? ((distribution[2] / totalRatings) * 100).toFixed(1) : '0.0',
-      3: totalRatings > 0 ? ((distribution[3] / totalRatings) * 100).toFixed(1) : '0.0',
-      4: totalRatings > 0 ? ((distribution[4] / totalRatings) * 100).toFixed(1) : '0.0',
-      5: totalRatings > 0 ? ((distribution[5] / totalRatings) * 100).toFixed(1) : '0.0'
-    };
-
     res.json({
       averageRating: video.averageRating,
-      totalRatings: totalRatings,
-      distribution: distribution,
-      distributionPercentage: distributionPercentage
+      totalRatings: video.ratings.length,
+      ratings: video.ratings
     });
   } catch (error: any) {
     console.error('Error obteniendo estadísticas de calificaciones:', error);
